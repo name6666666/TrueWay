@@ -17,11 +17,6 @@
         var info = _a[_i];
         data[info.id] = { mapVars: {} };
     }
-    function getEventIds(mapId) {
-        var _b, _c, _d;
-        return (_d = (_c = (_b = mz.$dataMap) === null || _b === void 0 ? void 0 : _b.events) === null || _c === void 0 ? void 0 : _c.map(function (event) { return event === null || event === void 0 ? void 0 : event.id; }).filter(function (id) { return id != null; })) !== null && _d !== void 0 ? _d : [];
-    }
-    getEventIds();
     var defaultData = data;
 
     var _createGameObjects = mz.DataManager.createGameObjects;

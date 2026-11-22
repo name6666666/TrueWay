@@ -28,14 +28,4 @@ for (const info of mz.$dataMapInfos) {
     data[info.id] = {mapVars: {}}
 }
 
-export function getEventIds(mapId?: number): number[] {
-    if (mapId !== undefined && mz.$gameMap?.mapId() !== mapId) {
-        return []
-    }
-
-    return mz.$dataMap?.events
-        ?.map((event: any) => event?.id)
-        .filter((id: number | undefined): id is number => id != null) ?? []
-}
-
 export const defaultData: TrueWayData = data
