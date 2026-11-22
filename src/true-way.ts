@@ -29,7 +29,11 @@ for (const info of mz.$dataMapInfos) {
     }
 }
 
-export var TrueWay: Partial<TrueWayType> = {
+declare global {
+    let TrueWay: Partial<TrueWayType>
+}
+
+TrueWay = {
     _data: data,
     Error: TrueWayError
 }

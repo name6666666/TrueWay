@@ -17,7 +17,7 @@ mz.DataManager.createGameObjects = function() {
 const _makeSaveContents = mz.DataManager.makeSaveContents
 mz.DataManager.makeSaveContents = function() {
     const ret =  _makeSaveContents.call(this)
-    ret.name6666666_TrueWay = TrueWay._data
+    ret.name6666666_TrueWay = TrueWay._data!
     return ret
 }
 

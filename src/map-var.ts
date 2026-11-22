@@ -1,5 +1,5 @@
 import mz from 'rmmz'
-import {TrueWay, TrueWayError} from './true-way'
+import {TrueWayError} from './true-way'
 
 
 
@@ -48,3 +48,9 @@ TrueWay.getMapById = function(id) {
 TrueWay.getMapCurrent = function() {
     return TrueWay.getMapById!(mz.$gameMap.mapId())
 }
+
+declare global {
+    let map: MapAttr
+}
+
+
