@@ -28,5 +28,12 @@
  * mapAttr.getParent
  * 内置属性————getParent，签名为(): MapAttr，获取父地图的属性管理器
  * 
+ * @url 6767
  * 
+ * @param 全局变量map
+ * @desc map总是当前地图的属性管理器
+ * @type boolean
+ * @default false
+ * @on yes
+ * @off no
  */

@@ -1,9 +1,9 @@
 import mz from 'rmmz'
-import { TrueWayData, defaultData } from './true-way'
+import { TrueWayData } from './true-way'
 
 
 declare module 'rmmz' {
-    interface SavefileContent {
+    interface SaveContents {
         name6666666_TrueWay: TrueWayData
     }
 }
@@ -11,7 +11,7 @@ declare module 'rmmz' {
 const _createGameObjects = mz.DataManager.createGameObjects
 mz.DataManager.createGameObjects = function() {
     _createGameObjects.call(this)
-    TrueWay._data = defaultData
+    TrueWay._data = {}
 }
 
 const _makeSaveContents = mz.DataManager.makeSaveContents

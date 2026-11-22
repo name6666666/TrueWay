@@ -54,3 +54,11 @@ declare global {
 }
 
 
+const enabled = mz.PluginManager.parameters('TrueWay.js')['全局变量map'] === 'true'
+if (enabled) {
+    const _Game_Map_setup = mz.Game_Map.prototype.setup
+    mz.Game_Map.prototype.setup = function(mapId) {
+        _Game_Map_setup.call(this, mapId)
+        map = TrueWay.getMapCurrent!()
+    }
+}
