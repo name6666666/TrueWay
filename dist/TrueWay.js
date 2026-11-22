@@ -9,14 +9,21 @@
 (function (mz) {
     'use strict';
 
-    TrueWay = {
-        _data: {}
-    };
     var data = {};
     for (var _i = 0, _a = mz.$dataMapInfos; _i < _a.length; _i++) {
         var info = _a[_i];
         data[info.id] = { mapVars: {} };
+        var map = mz.$dataMap[info.id];
+        for (var _b = 0, _c = map.events; _b < _c.length; _b++) {
+            var event_1 = _c[_b];
+            if (event_1 === null)
+                continue;
+            data[info.id][event_1.id] = {};
+        }
     }
+    TrueWay = {
+        _data: data
+    };
     var defaultData = data;
 
     var _createGameObjects = mz.DataManager.createGameObjects;

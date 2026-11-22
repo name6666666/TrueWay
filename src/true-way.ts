@@ -1,6 +1,8 @@
 import mz from 'rmmz'
 
 
+export class TrueWayError extends Error {}
+
 export interface TrueWayData {
     [mapNumber: number]: MapData
 }
@@ -10,12 +12,9 @@ export interface MapData {
     mapVars: object
 }
 
-export interface TrueWay {
+export interface TrueWayType {
     _data: TrueWayData
-}
-
-declare global {
-    let TrueWay: TrueWay
+    Error: typeof TrueWayError
 }
 
 let data: TrueWayData = {}
@@ -30,8 +29,9 @@ for (const info of mz.$dataMapInfos) {
     }
 }
 
-TrueWay = {
-    _data: data
+export var TrueWay: Partial<TrueWayType> = {
+    _data: data,
+    Error: TrueWayError
 }
 
 export const defaultData: TrueWayData = data
