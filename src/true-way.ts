@@ -18,14 +18,20 @@ declare global {
     let TrueWay: TrueWay
 }
 
-TrueWay = {
-    _data: {}
-}
-
 let data: TrueWayData = {}
 
 for (const info of mz.$dataMapInfos) {
     data[info.id] = {mapVars: {}}
+
+    const map = mz.$dataMap[info.id]
+    for (const event of map.events) {
+        if (event === null) continue
+        data[info.id][event.id] = {}
+    }
+}
+
+TrueWay = {
+    _data: data
 }
 
 export const defaultData: TrueWayData = data
