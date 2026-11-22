@@ -1,0 +1,7 @@
+{
+  "name": "rmmz-completion",
+  "version": "0.1.0",
+  "private": true,
+  "types": "index.d.ts",
+  "description": "Missing RPG Maker MZ global and savefile declarations for rmmz"
+}

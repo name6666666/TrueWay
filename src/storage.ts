@@ -1,7 +1,5 @@
 import mz from 'rmmz'
-import {
-    TrueWayData,
-} from './true-way.ts'
+import { TrueWayData, defaultData } from './true-way'
 
 
 declare module 'rmmz' {
@@ -13,7 +11,7 @@ declare module 'rmmz' {
 const _createGameObjects = mz.DataManager.createGameObjects
 mz.DataManager.createGameObjects = function() {
     _createGameObjects.call(this)
-    TrueWay._data = {}
+    TrueWay._data = defaultData
 }
 
 const _makeSaveContents = mz.DataManager.makeSaveContents
@@ -25,5 +23,6 @@ mz.DataManager.makeSaveContents = function() {
 
 const _extractSaveContents = mz.DataManager.extractSaveContents
 mz.DataManager.extractSaveContents = function(contents) {
+    _extractSaveContents.call(this, contents)
     TrueWay._data = contents.name6666666_TrueWay
 }
