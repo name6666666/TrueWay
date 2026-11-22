@@ -28,10 +28,34 @@
  * mapAttr.getParent
  * 内置属性————getParent，签名为(): MapAttr，获取父地图的属性管理器
  * 
+ * @url 6767
  * 
+ * @param 全局变量map
+ * @desc map总是当前地图的属性管理器
+ * @type boolean
+ * @default false
+ * @on yes
+ * @off no
  */
 (function (mz) {
     'use strict';
+
+    var _createGameObjects = mz.DataManager.createGameObjects;
+    mz.DataManager.createGameObjects = function () {
+        _createGameObjects.call(this);
+        TrueWay._data = {};
+    };
+    var _makeSaveContents = mz.DataManager.makeSaveContents;
+    mz.DataManager.makeSaveContents = function () {
+        var ret = _makeSaveContents.call(this);
+        ret.name6666666_TrueWay = TrueWay._data;
+        return ret;
+    };
+    var _extractSaveContents = mz.DataManager.extractSaveContents;
+    mz.DataManager.extractSaveContents = function (contents) {
+        _extractSaveContents.call(this, contents);
+        TrueWay._data = contents.name6666666_TrueWay;
+    };
 
     /******************************************************************************
     Copyright (c) Microsoft Corporation.
@@ -76,39 +100,9 @@
         }
         return TrueWayError;
     }(Error));
-    var data = {};
-    for (var _i = 0, _a = mz.$dataMapInfos; _i < _a.length; _i++) {
-        var info = _a[_i];
-        data[info.id] = { mapVars: {} };
-        var map = mz.$dataMap[info.id];
-        for (var _b = 0, _c = map.events; _b < _c.length; _b++) {
-            var event_1 = _c[_b];
-            if (event_1 === null)
-                continue;
-            data[info.id][event_1.id] = {};
-        }
-    }
-    var TrueWay = {
-        _data: data,
+    TrueWay = {
+        _data: {},
         Error: TrueWayError
-    };
-    var defaultData = data;
-
-    var _createGameObjects = mz.DataManager.createGameObjects;
-    mz.DataManager.createGameObjects = function () {
-        _createGameObjects.call(this);
-        TrueWay._data = defaultData;
-    };
-    var _makeSaveContents = mz.DataManager.makeSaveContents;
-    mz.DataManager.makeSaveContents = function () {
-        var ret = _makeSaveContents.call(this);
-        ret.name6666666_TrueWay = TrueWay._data;
-        return ret;
-    };
-    var _extractSaveContents = mz.DataManager.extractSaveContents;
-    mz.DataManager.extractSaveContents = function (contents) {
-        _extractSaveContents.call(this, contents);
-        TrueWay._data = contents.name6666666_TrueWay;
     };
 
     TrueWay.getMapById = function (id) {
@@ -140,6 +134,27 @@
     };
     TrueWay.getMapCurrent = function () {
         return TrueWay.getMapById(mz.$gameMap.mapId());
+    };
+    var enabled = mz.PluginManager.parameters('TrueWay.js')['全局变量map'] === 'true';
+    if (enabled) {
+        var _Game_Map_setup_1 = mz.Game_Map.prototype.setup;
+        mz.Game_Map.prototype.setup = function (mapId) {
+            _Game_Map_setup_1.call(this, mapId);
+            map = TrueWay.getMapCurrent();
+        };
+    }
+
+    var _Game_Map_setup = mz.Game_Map.prototype.setup;
+    mz.Game_Map.prototype.setup = function (mapId) {
+        _Game_Map_setup.call(this, mapId);
+        if (TrueWay._data[mapId] === undefined) {
+            var mapContent = { mapVars: {} };
+            for (var _i = 0, _a = mz.$gameMap.events(); _i < _a.length; _i++) {
+                var e = _a[_i];
+                mapContent[e.eventId()] = {};
+            }
+            TrueWay._data[mapId] = mapContent;
+        }
     };
 
 })(window);
