@@ -1,5 +1,5 @@
 import mz from 'rmmz'
-import { MapData } from './true-way'
+import { MapData, param } from './true-way'
 import escape from 'escape-string-regexp'
 
 
@@ -17,9 +17,9 @@ mz.Game_Map.prototype.setup = function(mapId) {
 }
 
 
-const label = escape(String(mz.PluginManager.parameters('TrueWay.js')['初始化标签']))
-const pattern = new RegExp(`<${label}>(((?!(</${label}>))[\s\S])*?)</${label}>`)
-
+const label = escape(String(param.init))
+const pattern = new RegExp(String.raw`<${label}>(((?!(</${label}>))[\s\S])*?)</${label}>`)
+console.log(param.init)
 function parseComment() {
     const match = mz.$dataMap.note.match(pattern)
     if (match === null) return

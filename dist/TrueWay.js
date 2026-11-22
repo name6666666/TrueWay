@@ -30,32 +30,30 @@
  * 
  * @url 6767
  * 
- * @param 全局变量map
+ * @param map
+ * @text 全局变量map
  * @desc map总是当前地图的属性管理器
  * @type boolean
- * @default false
+ * @default true
  * @on yes
  * @off no
+ * 
+ * @param self
+ * @text 全局变量self
+ * @desc self总是当前事件的属性管理器
+ * @type boolean
+ * @default true
+ * @on yes
+ * @off no
+ * 
+ * @param init
+ * @text 初始化标签
+ * @desc 设置初始化标签的名称
+ * @type text
+ * @default init
  */
 (function (mz) {
     'use strict';
-
-    var _createGameObjects = mz.DataManager.createGameObjects;
-    mz.DataManager.createGameObjects = function () {
-        _createGameObjects.call(this);
-        TrueWay._data = {};
-    };
-    var _makeSaveContents = mz.DataManager.makeSaveContents;
-    mz.DataManager.makeSaveContents = function () {
-        var ret = _makeSaveContents.call(this);
-        ret.name6666666_TrueWay = TrueWay._data;
-        return ret;
-    };
-    var _extractSaveContents = mz.DataManager.extractSaveContents;
-    mz.DataManager.extractSaveContents = function (contents) {
-        _extractSaveContents.call(this, contents);
-        TrueWay._data = contents.name6666666_TrueWay;
-    };
 
     /******************************************************************************
     Copyright (c) Microsoft Corporation.
@@ -88,6 +86,10 @@
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     }
 
+    function __makeTemplateObject(cooked, raw) {
+        if (Object.defineProperty) { Object.defineProperty(cooked, "raw", { value: raw }); } else { cooked.raw = raw; }
+        return cooked;
+    }
     typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
         var e = new Error(message);
         return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
@@ -100,9 +102,28 @@
         }
         return TrueWayError;
     }(Error));
-    TrueWay = {
+    // @ts-ignore
+    window.TrueWay = {
         _data: {},
         Error: TrueWayError
+    };
+    var param = mz.PluginManager.parameters('TrueWay');
+
+    var _createGameObjects = mz.DataManager.createGameObjects;
+    mz.DataManager.createGameObjects = function () {
+        _createGameObjects.call(this);
+        TrueWay._data = {};
+    };
+    var _makeSaveContents = mz.DataManager.makeSaveContents;
+    mz.DataManager.makeSaveContents = function () {
+        var ret = _makeSaveContents.call(this);
+        ret.name6666666_TrueWay = TrueWay._data;
+        return ret;
+    };
+    var _extractSaveContents = mz.DataManager.extractSaveContents;
+    mz.DataManager.extractSaveContents = function (contents) {
+        _extractSaveContents.call(this, contents);
+        TrueWay._data = contents.name6666666_TrueWay;
     };
 
     TrueWay.getMapById = function (id) {
@@ -135,13 +156,26 @@
     TrueWay.getMapCurrent = function () {
         return TrueWay.getMapById(mz.$gameMap.mapId());
     };
-    var enabled = mz.PluginManager.parameters('TrueWay.js')['全局变量map'] === 'true';
+    var enabled = param.map === 'true';
     if (enabled) {
         var _Game_Map_setup_1 = mz.Game_Map.prototype.setup;
         mz.Game_Map.prototype.setup = function (mapId) {
             _Game_Map_setup_1.call(this, mapId);
-            map = TrueWay.getMapCurrent();
+            // @ts-ignore
+            window.map = TrueWay.getMapCurrent();
         };
+    }
+
+    function escapeStringRegexp(string) {
+    	if (typeof string !== 'string') {
+    		throw new TypeError('Expected a string');
+    	}
+
+    	// Escape characters with special meaning either inside or outside character sets.
+    	// Use a simple backslash escape when it’s always valid, and a `\xnn` escape when the simpler form would be disallowed by Unicode patterns’ stricter grammar.
+    	return string
+    		.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&')
+    		.replace(/-/g, '\\x2d');
     }
 
     var _Game_Map_setup = mz.Game_Map.prototype.setup;
@@ -154,7 +188,20 @@
                 mapContent[e.eventId()] = {};
             }
             TrueWay._data[mapId] = mapContent;
+            parseComment();
         }
     };
+    var label = escapeStringRegexp(String(param.init));
+    var pattern = new RegExp(String.raw(templateObject_1 || (templateObject_1 = __makeTemplateObject(["<", ">(((?!(</", ">))[sS])*?)</", ">"], ["<", ">(((?!(</", ">))[\\s\\S])*?)</", ">"])), label, label, label));
+    console.log(param.init);
+    function parseComment() {
+        var match = mz.$dataMap.note.match(pattern);
+        if (match === null)
+            return;
+        var script = match[1];
+        var func = new Function(script);
+        func();
+    }
+    var templateObject_1;
 
 })(window);

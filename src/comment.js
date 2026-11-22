@@ -30,21 +30,24 @@
  * 
  * @url 6767
  * 
- * @param 全局变量map
+ * @param map
+ * @text 全局变量map
  * @desc map总是当前地图的属性管理器
  * @type boolean
  * @default true
  * @on yes
  * @off no
  * 
- * @param 全局变量self
+ * @param self
+ * @text 全局变量self
  * @desc self总是当前事件的属性管理器
  * @type boolean
  * @default true
  * @on yes
  * @off no
  * 
- * @param 初始化标签
+ * @param init
+ * @text 初始化标签
  * @desc 设置初始化标签的名称
  * @type text
  * @default init

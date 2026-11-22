@@ -1,3 +1,5 @@
+import mz from 'rmmz'
+
 export class TrueWayError extends Error {}
 
 export interface TrueWayData {
@@ -18,8 +20,10 @@ declare global {
     let TrueWay: Partial<TrueWayType>
 }
 
-TrueWay = {
+// @ts-ignore
+window.TrueWay = {
     _data: {},
     Error: TrueWayError
 }
 
+export const param = mz.PluginManager.parameters('TrueWay')

@@ -1,5 +1,5 @@
 import mz from 'rmmz'
-import {TrueWayError} from './true-way'
+import {param, TrueWayError} from './true-way'
 
 
 
@@ -54,11 +54,12 @@ declare global {
 }
 
 
-const enabled = mz.PluginManager.parameters('TrueWay.js')['全局变量map'] === 'true'
+const enabled = param.map === 'true'
 if (enabled) {
     const _Game_Map_setup = mz.Game_Map.prototype.setup
     mz.Game_Map.prototype.setup = function(mapId) {
         _Game_Map_setup.call(this, mapId)
-        map = TrueWay.getMapCurrent!()
+        // @ts-ignore
+        window.map = TrueWay.getMapCurrent!()
     }
 }
