@@ -11,13 +11,14 @@ interface MapAttr {
 
 declare module './true-way' {
     interface TrueWayType {
-        getMapById: {(id: number): MapAttr}
-        getMapCurrent: {(): MapAttr}
+        getMapById: {(id: number): MapAttr | null}
+        getMapCurrent: {(): MapAttr | null}
     }
 }
 
 
 TrueWay.getMapById = function(id) {
+    if (!(id in TrueWay._data!)) return null
     return new Proxy({
         id,
         getParent() {
@@ -42,24 +43,18 @@ TrueWay.getMapById = function(id) {
             const scope = TrueWay._data![target.id].mapVars
             return Reflect.set(scope, p, newValue)
         }
-    })
+    }) as MapAttr
 }
 
 TrueWay.getMapCurrent = function() {
     return TrueWay.getMapById!(mz.$gameMap.mapId())
 }
 
-declare global {
-    let map: MapAttr
-}
-
-
-const enabled = param.map === 'true'
-if (enabled) {
+if (param.map) {
     const _Game_Map_setup = mz.Game_Map.prototype.setup
     mz.Game_Map.prototype.setup = function(mapId) {
         _Game_Map_setup.call(this, mapId)
         // @ts-ignore
-        window.map = TrueWay.getMapCurrent!()
+        window[param.map] = TrueWay.getMapCurrent!()
     }
 }

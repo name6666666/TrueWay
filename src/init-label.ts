@@ -3,6 +3,13 @@ import { MapData, param } from './true-way'
 import escape from 'escape-string-regexp'
 
 
+let pattern: RegExp
+
+if (param.init) {
+    const label = escape(String(param.init))
+    pattern = new RegExp(String.raw`<${label}>(((?!(</${label}>))[\s\S])*?)</${label}>`)
+}
+
 const _Game_Map_setup = mz.Game_Map.prototype.setup
 mz.Game_Map.prototype.setup = function(mapId) {
     _Game_Map_setup.call(this, mapId)
@@ -12,18 +19,14 @@ mz.Game_Map.prototype.setup = function(mapId) {
             mapContent[e.eventId()] = {}
         }
         TrueWay._data![mapId] = mapContent
-        parseComment()
+        
+        if (param.init) {
+            const match = mz.$dataMap.note.match(pattern)
+            if (match !== null) {
+                const script = match[1]
+                const func = new Function(script)
+                func()
+            }
+        }
     }
-}
-
-
-const label = escape(String(param.init))
-const pattern = new RegExp(String.raw`<${label}>(((?!(</${label}>))[\s\S])*?)</${label}>`)
-console.log(param.init)
-function parseComment() {
-    const match = mz.$dataMap.note.match(pattern)
-    if (match === null) return
-    const script = match[1]
-    const func = new Function(script)
-    func()
 }
