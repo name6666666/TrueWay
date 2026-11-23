@@ -56,11 +56,12 @@
  * @type text
  * @default init
  * 
- * @param initEvent
- * @text 初始化事件脚本标签
- * @desc 在游戏启动时为每个事件初始化属性的脚本的标签（应该在注释里写），为空报错
- * @type text
- * @default init
+ * @command initEvent
+ * @text 初始化事件脚本
+ * @desc 编写在游戏启动时为事件初始化属性的脚本，不受事件系统约束，一定会在游戏刚启动时执行
+ * @arg script
+ * @text 脚本
+ * @type multiline_string
  * 
  * @param mapTable
  * @text 地图名称建表
@@ -94,7 +95,7 @@
     const param = originalParam;
     const identifierRegex = /^[\p{ID_Start}\p{ID_Continue}]*$/u;
     for (const ident of [
-        param.map, param.self, param.onEnter, param.initMap, param.initEvent
+        param.map, param.self, param.onEnter, param.initMap
     ]) {
         const match = ident.match(identifierRegex);
         if (match === null) {
@@ -530,9 +531,9 @@
     var browserExports = requireBrowser();
     var fetchSync = /*@__PURE__*/getDefaultExportFromCjs(browserExports);
 
-    const _createGameObjects$1 = mz.DataManager.createGameObjects;
+    const _createGameObjects$2 = mz.DataManager.createGameObjects;
     mz.DataManager.createGameObjects = function () {
-        _createGameObjects$1.call(this);
+        _createGameObjects$2.call(this);
         TrueWay._data = {};
         TrueWay.$dataMapAll = [];
         for (const info of mz.$dataMapInfos) {
@@ -681,6 +682,30 @@
             }
         });
     }
+    mz.PluginManager.registerCommand('TrueWay', 'initEvent', () => { });
+    function initEvent(mapId, eventId, cmd) {
+        console.log(cmd);
+    }
+    const _createGameObjects$1 = mz.DataManager.createGameObjects;
+    mz.DataManager.createGameObjects = function () {
+        _createGameObjects$1.call(this);
+        const dataMapAll = TrueWay.$dataMapAll;
+        for (const i in dataMapAll) {
+            const map = dataMapAll[i];
+            for (const event of map.events) {
+                if (!event)
+                    continue;
+                for (const page of event.pages) {
+                    for (const cmd of page.list) {
+                        if (cmd.code !== 357) {
+                            continue;
+                        }
+                        initEvent(Number(i), event.id, cmd);
+                    }
+                }
+            }
+        }
+    };
 
     let mapTable;
     let inverseMapTable;

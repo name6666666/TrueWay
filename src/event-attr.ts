@@ -1,5 +1,5 @@
 import mz from 'rmmz'
-import { TrueWayError } from './true-way'
+import { param, TrueWayError } from './true-way'
 import { MapAttr } from './map-attr'
 
 
@@ -35,7 +35,13 @@ export function getEventByMapIdAndEventId(mapId: number, eventId: number): Event
 mz.PluginManager.registerCommand('TrueWay', 'initEvent', () => {})
 
 function initEvent(mapId: number, eventId: number, cmd: mz.DataCommand) {
-    console.log(cmd)
+    if ((cmd.parameters![0] === 'TrueWay') && (cmd.parameters![1] === 'initEvent')) {
+        const script = cmd.parameters![3]
+        const self = getEventByMapIdAndEventId(mapId, eventId)
+        // @ts-ignore
+        const func = new Function(param.self, script)
+        func(self)
+    }
 }
 
 const _createGameObjects = mz.DataManager.createGameObjects
@@ -45,6 +51,7 @@ mz.DataManager.createGameObjects = function() {
     for (const i in dataMapAll) {
         const map = dataMapAll[i]
         for (const event of map.events) {
+            if (!event) continue
             for (const page of event.pages) {
                 for (const cmd of page.list) {
                     if (cmd.code !== 357) {
