@@ -36,9 +36,9 @@ mz.PluginManager.registerCommand('TrueWay', 'initEvent', () => {})
 
 function initEvent(mapId: number, eventId: number, cmd: mz.DataCommand) {
     if ((cmd.parameters![0] === 'TrueWay') && (cmd.parameters![1] === 'initEvent')) {
-        const script = cmd.parameters![3]
-        const self = getEventByMapIdAndEventId(mapId, eventId)
         // @ts-ignore
+        const script: string = cmd.parameters![3].script
+        const self = getEventByMapIdAndEventId(mapId, eventId)
         const func = new Function(param.self, script)
         func(self)
     }
@@ -61,5 +61,27 @@ mz.DataManager.createGameObjects = function() {
                 }
             }
         }
+    }
+}
+
+declare module './true-way' {
+    interface TrueWayType {
+        getEventCurrent: {(): EventAttr}
+    }
+}
+
+TrueWay.getEventCurrent = function() {
+    const mapId = mz.$gameMap.mapId()
+    const eventId = mz.$gameMap._interpreter.eventId()
+    return getEventByMapIdAndEventId(mapId, eventId)
+}
+
+const _Game_Map_setup = mz.Game_Map.prototype.setup
+mz.Game_Map.prototype.setup = function(mapId) {
+    _Game_Map_setup.call(this, mapId)
+    const self = TrueWay.getEventCurrent!()
+    if (param.self) {
+        // @ts-ignore
+        window[param.self] = self
     }
 }

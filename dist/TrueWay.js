@@ -684,7 +684,14 @@
     }
     mz.PluginManager.registerCommand('TrueWay', 'initEvent', () => { });
     function initEvent(mapId, eventId, cmd) {
-        console.log(cmd);
+        if ((cmd.parameters[0] === 'TrueWay') && (cmd.parameters[1] === 'initEvent')) {
+            // @ts-ignore
+            const script = cmd.parameters[3].script;
+            const self = getEventByMapIdAndEventId(mapId, eventId);
+            console.log(script);
+            const func = new Function(param.self, script);
+            func(self);
+        }
     }
     const _createGameObjects$1 = mz.DataManager.createGameObjects;
     mz.DataManager.createGameObjects = function () {
