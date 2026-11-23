@@ -3,7 +3,7 @@ import {genReg, param, TrueWayError} from './true-way'
 import escape from 'escape-string-regexp'
 import { EventAttr, getEventByMapIdAndEventId } from './event-attr'
 import './storage'
-import { solveMapTable } from './solve-table'
+import { solveEventTable, solveMapTable } from './solve-table'
 
 
 export interface MapAttr {
@@ -13,6 +13,7 @@ export interface MapAttr {
     entered: boolean
     getEventById: {(id: number): EventAttr}
     getMapByName: {(name: string): MapAttr}
+    getEventByName: {(name: string): EventAttr}
 }
 
 declare module './true-way' {
@@ -34,15 +35,23 @@ export interface InverseMapTable {
     [id: number]: string[]
 }
 
-let mapTable: MapTable
-let inverseMapTable: InverseMapTable
+export interface EventTable {
+    [mapId: number]: {
+        [eventName: string]: number
+    }
+}
+
+let mapTable: MapTable | null
+let inverseMapTable: InverseMapTable | null
+let eventTable: EventTable | null
 
 const _createGameObjects = mz.DataManager.createGameObjects
 mz.DataManager.createGameObjects = function() {
     _createGameObjects.call(this)
-    if (param.mapTable) {
-        [mapTable, inverseMapTable] = solveMapTable()
-    }
+    let [a, b] = param.mapTable ? solveMapTable() : [null, null]
+    mapTable = a
+    inverseMapTable = b
+    eventTable = param.eventTable ? solveEventTable() : null
 }
 
 function parent(id: number): MapAttr {
@@ -80,6 +89,16 @@ TrueWay.getMapById = function(id) {
                         }
                         if (!(id in TrueWay._data!)) throw new TrueWayError(`Unknown map name ${name}`)
                         return TrueWay.getMapById!(target.id)
+                    }
+                    case 'getEventByName': return function(name: string): EventAttr {
+                        if (eventTable === null) {
+                            throw new TrueWayError(
+                                `getEventByName unavailable. Particular configuration required`
+                            )
+                        }
+                        const events = eventTable[id]
+                        const eventId = events[name]
+                        return getEventByMapIdAndEventId(id, eventId)
                     }
                 }
                 throw new TrueWayError(`Unknown attribute ${String(p)}, when access map ${id}`)

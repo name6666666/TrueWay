@@ -1,5 +1,5 @@
 import mz from 'rmmz'
-import { InverseMapTable, MapTable } from './map-attr'
+import { EventTable, InverseMapTable, MapTable } from './map-attr'
 import { TrueWayError } from './true-way'
 
 
@@ -78,4 +78,21 @@ export function solveMapTable(): [MapTable, InverseMapTable] {
     addInverseMapTable(mapTable, [])
 
     return [mapTable, inverseMapTable]
+}
+
+export function solveEventTable(): EventTable {
+    const dataMapAll = TrueWay.$dataMapAll!
+    const ret: EventTable = {}
+    for (const i in dataMapAll) {
+        const map = dataMapAll[i]
+        const events: {[name: string]: number} = {}
+        for (const e of map.events) {
+            if (e.name in events) {
+                throw new TrueWayError(`Duplicated event name ${e.name}. Modify name or disable the key feature to pass`)
+            }
+            events[e.name] = e.id
+        }
+        ret[i] = events
+    }
+    return ret
 }
