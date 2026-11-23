@@ -52,5 +52,5 @@ for (const ident of [
 }
 
 export function genReg(label: string): RegExp {
-    return new RegExp(String.raw`<${label}>(((?!(</${label}>))[\s\S])*?)</${label}>`)
+    return new RegExp(String.raw`<${label}>(((?!(</${label}>))[\s\S])*?)</${label}>`, 'g')
 }

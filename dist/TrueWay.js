@@ -48,7 +48,19 @@
  * @text 进入地图脚本标签
  * @desc 进入地图时，在所有事件开始判定之间就执行的脚本的标签，为空禁用
  * @type text
- * @default on-enter
+ * @default onEnter
+ * 
+ * @param initMap
+ * @text 初始化地图脚本标签
+ * @desc 在游戏启动时为每个地图初始化属性的脚本的标签，为空报错
+ * @type text
+ * @default init
+ * 
+ * @param initEvent
+ * @text 初始化事件脚本标签
+ * @desc 在游戏启动时为每个事件初始化属性的脚本的标签（应该在注释里写），为空报错
+ * @type text
+ * @default init
  * 
  * @param mapTable
  * @text 地图名称建表
@@ -135,8 +147,18 @@
     originalParam.eventTable = originalParam.eventTable === 'true' ? true : false;
     // @ts-ignore
     var param = originalParam;
+    var identifierRegex = /^[\p{ID_Start}\p{ID_Continue}]*$/u;
+    for (var _i = 0, _a = [
+        param.map, param.self, param.onEnter, param.initMap, param.initEvent
+    ]; _i < _a.length; _i++) {
+        var ident = _a[_i];
+        var match = ident.match(identifierRegex);
+        if (match === null) {
+            throw new TrueWayError("Invailid identifier ".concat(ident));
+        }
+    }
     function genReg(label) {
-        return new RegExp(String.raw(templateObject_1 || (templateObject_1 = __makeTemplateObject(["<", ">(((?!(</", ">))[sS])*?)</", ">"], ["<", ">(((?!(</", ">))[\\s\\S])*?)</", ">"])), label, label, label));
+        return new RegExp(String.raw(templateObject_1 || (templateObject_1 = __makeTemplateObject(["<", ">(((?!(</", ">))[sS])*?)</", ">"], ["<", ">(((?!(</", ">))[\\s\\S])*?)</", ">"])), label, label, label), 'g');
     }
     var templateObject_1;
 
@@ -325,7 +347,24 @@
         mapTable = a;
         inverseMapTable = b;
         eventTable = param.eventTable ? solveEventTable() : null;
+        initAttr();
     };
+    if (!param.initMap)
+        throw new TrueWayError('Parameter error. Essential label required');
+    var initAttrPattern = genReg(param.initMap);
+    function initAttr() {
+        var dataMapAll = TrueWay.$dataMapAll;
+        for (var i in dataMapAll) {
+            var map = TrueWay.getMapById(Number(i));
+            var matches = dataMapAll[i].note.matchAll(initAttrPattern);
+            for (var _i = 0, matches_1 = matches; _i < matches_1.length; _i++) {
+                var match = matches_1[_i];
+                var script = match[1];
+                var func = new Function(param.map, script);
+                func(map);
+            }
+        }
+    }
     function parent(id) {
         var newId = mz.$dataMapInfos[id].parentId;
         if (newId === 0)
@@ -394,10 +433,10 @@
     TrueWay.getMapCurrent = function () {
         return TrueWay.getMapById(mz.$gameMap.mapId());
     };
-    var pattern;
+    var onEnterPattern;
     if (param.onEnter) {
         var label = escapeStringRegexp(String(param.onEnter));
-        pattern = genReg(label);
+        onEnterPattern = genReg(label);
     }
     var _Game_Map_setup = mz.Game_Map.prototype.setup;
     mz.Game_Map.prototype.setup = function (mapId) {
@@ -408,8 +447,11 @@
             window[param.map] = map;
         }
         if (param.onEnter) {
-            var match = mz.$dataMap.note.match(pattern);
-            if (match !== null) {
+            console.log(onEnterPattern);
+            console.log(mz.$dataMap.note.matchAll);
+            var matches = mz.$dataMap.note.matchAll(onEnterPattern);
+            for (var _i = 0, matches_2 = matches; _i < matches_2.length; _i++) {
+                var match = matches_2[_i];
                 var script = match[1];
                 var func = new Function(script);
                 func();

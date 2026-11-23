@@ -48,7 +48,7 @@
  * @text 进入地图脚本标签
  * @desc 进入地图时，在所有事件开始判定之间就执行的脚本的标签，为空禁用
  * @type text
- * @default on-enter
+ * @default onEnter
  * 
  * @param initMap
  * @text 初始化地图脚本标签
