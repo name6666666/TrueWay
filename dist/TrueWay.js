@@ -81,203 +81,547 @@
 (function (mz) {
     'use strict';
 
-    /******************************************************************************
-    Copyright (c) Microsoft Corporation.
-
-    Permission to use, copy, modify, and/or distribute this software for any
-    purpose with or without fee is hereby granted.
-
-    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-    REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-    AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-    INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-    LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-    OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-    PERFORMANCE OF THIS SOFTWARE.
-    ***************************************************************************** */
-    /* global Reflect, Promise, SuppressedError, Symbol, Iterator */
-
-    var extendStatics = function(d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-
-    function __extends(d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    class TrueWayError extends Error {
     }
-
-    function __spreadArray(to, from, pack) {
-        if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-            if (ar || !(i in from)) {
-                if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-                ar[i] = from[i];
-            }
-        }
-        return to.concat(ar || Array.prototype.slice.call(from));
-    }
-
-    function __makeTemplateObject(cooked, raw) {
-        if (Object.defineProperty) { Object.defineProperty(cooked, "raw", { value: raw }); } else { cooked.raw = raw; }
-        return cooked;
-    }
-    typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
-        var e = new Error(message);
-        return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
-    };
-
-    var TrueWayError = /** @class */ (function (_super) {
-        __extends(TrueWayError, _super);
-        function TrueWayError() {
-            return _super !== null && _super.apply(this, arguments) || this;
-        }
-        return TrueWayError;
-    }(Error));
     // @ts-ignore
     window.TrueWay = {
         Error: TrueWayError
     };
-    var originalParam = mz.PluginManager.parameters('TrueWay');
+    const originalParam = mz.PluginManager.parameters('TrueWay');
     originalParam.mapTable = originalParam.mapTable === 'true' ? true : false;
     originalParam.eventTable = originalParam.eventTable === 'true' ? true : false;
     // @ts-ignore
-    var param = originalParam;
-    var identifierRegex = /^[\p{ID_Start}\p{ID_Continue}]*$/u;
-    for (var _i = 0, _a = [
+    const param = originalParam;
+    const identifierRegex = /^[\p{ID_Start}\p{ID_Continue}]*$/u;
+    for (const ident of [
         param.map, param.self, param.onEnter, param.initMap, param.initEvent
-    ]; _i < _a.length; _i++) {
-        var ident = _a[_i];
-        var match = ident.match(identifierRegex);
+    ]) {
+        const match = ident.match(identifierRegex);
         if (match === null) {
-            throw new TrueWayError("Invailid identifier ".concat(ident));
+            throw new TrueWayError(`Invailid identifier ${ident}`);
         }
     }
     function genReg(label) {
-        return new RegExp(String.raw(templateObject_1 || (templateObject_1 = __makeTemplateObject(["<", ">(((?!(</", ">))[sS])*?)</", ">"], ["<", ">(((?!(</", ">))[\\s\\S])*?)</", ">"])), label, label, label), 'g');
+        return new RegExp(String.raw `<${label}>(((?!(</${label}>))[\s\S])*?)</${label}>`, 'g');
     }
-    var templateObject_1;
 
-    var isReady = false;
-    var _createGameObjects$1 = mz.DataManager.createGameObjects;
+    function getDefaultExportFromCjs (x) {
+    	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
+    }
+
+    /* eslint-env browser */
+
+    var browser;
+    var hasRequiredBrowser;
+
+    function requireBrowser () {
+    	if (hasRequiredBrowser) return browser;
+    	hasRequiredBrowser = 1;
+    	const textEncoder = new TextEncoder();
+    	const textDecoder = new TextDecoder();
+
+    	function syncFetch (...args) {
+    	  const request = new syncFetch.Request(...args);
+
+    	  const xhr = new XMLHttpRequest();
+    	  xhr.withCredentials = request.credentials === 'include';
+    	  xhr.timeout = request[INTERNALS].timeout;
+
+    	  // Request
+    	  xhr.open(request.method, request.url, false);
+
+    	  let useBinaryEncoding = false;
+    	  try {
+    	    // Only allowed in Worker scope, not available in older browsers
+    	    // https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/responseType#Synchronous_XHR_restrictions
+    	    xhr.responseType = 'arraybuffer';
+    	  } catch (e) {
+    	    // Not in Worker scope; instead, attempt this alternative method
+    	    // https://web.archive.org/web/20071103070418/http://mgran.blogspot.com/2006/08/downloading-binary-streams-with.html
+    	    xhr.overrideMimeType('text/plain; charset=x-user-defined');
+    	    useBinaryEncoding = true;
+    	  }
+
+    	  for (const header of request.headers) {
+    	    xhr.setRequestHeader(...header);
+    	  }
+
+    	  xhr.send(request[INTERNALS].body || null);
+
+    	  // Response
+    	  let headers = xhr.getAllResponseHeaders();
+    	  headers = headers && headers.split('\r\n').filter(Boolean).map(header => header.split(': ', 2));
+
+    	  let body = xhr.response;
+    	  if (useBinaryEncoding) {
+    	    const buffer = new Uint8Array(body.length);
+    	    for (let i = 0; i < body.length; i++) {
+    	      buffer[i] = body.charCodeAt(i) & 0xff;
+    	    }
+    	    body = buffer;
+    	  }
+
+    	  const response = new syncFetch.Response(body, {
+    	    headers,
+    	    status: xhr.status,
+    	    statusText: xhr.statusText
+    	  });
+
+    	  response[INTERNALS].url = xhr.responseURL;
+    	  response[INTERNALS].redirected = xhr.responseURL !== request.url;
+
+    	  return response
+    	}
+
+    	const INTERNALS = Symbol('SyncFetch Internals');
+    	const REQ_UNSUPPORTED = ['mode', 'cache', 'redirect', 'referrer', 'integrity'];
+    	const HTTP_STATUS = {
+    	  100: 'Continue',
+    	  101: 'Switching Protocols',
+    	  200: 'OK',
+    	  201: 'Created',
+    	  202: 'Accepted',
+    	  203: 'Non-Authoritative Information',
+    	  204: 'No Content',
+    	  205: 'Reset Content',
+    	  206: 'Partial Content',
+    	  300: 'Multiple Choices',
+    	  301: 'Moved Permanently',
+    	  302: 'Found',
+    	  303: 'See Other',
+    	  304: 'Not Modified',
+    	  305: 'Use Proxy',
+    	  307: 'Temporary Redirect',
+    	  400: 'Bad Request',
+    	  401: 'Unauthorized',
+    	  402: 'Payment Required',
+    	  403: 'Forbidden',
+    	  404: 'Not Found',
+    	  405: 'Method Not Allowed',
+    	  406: 'Not Acceptable',
+    	  407: 'Proxy Authentication Required',
+    	  408: 'Request Timeout',
+    	  409: 'Conflict',
+    	  410: 'Gone',
+    	  411: 'Length Required',
+    	  412: 'Precondition Failed',
+    	  413: 'Payload Too Large',
+    	  414: 'URI Too Long',
+    	  415: 'Unsupported Media Type',
+    	  416: 'Range Not Satisfiable',
+    	  417: 'Expectation Failed',
+    	  426: 'Upgrade Required',
+    	  500: 'Internal Server Error',
+    	  501: 'Not Implemented',
+    	  502: 'Bad Gateway',
+    	  503: 'Service Unavailable',
+    	  504: 'Gateway Timeout',
+    	  505: 'HTTP Version Not Supported'
+    	};
+
+    	class SyncRequest {
+    	  constructor (resource, init = {}) {
+    	    for (const option of REQ_UNSUPPORTED) {
+    	      if (option in init) {
+    	        throw new TypeError(`option ${option} not supported`)
+    	      }
+    	    }
+
+    	    if (init.credentials === 'same-origin') {
+    	      throw new TypeError('option credentials with value \'same-origin\' not supported')
+    	    }
+
+    	    this[INTERNALS] = {
+    	      method: init.method || 'GET',
+    	      headers: new syncFetch.Headers(init.headers),
+    	      body: parseBody(init.body),
+    	      credentials: init.credentials || 'omit',
+
+    	      // Non-spec
+    	      timeout: init.timeout || 0
+    	    };
+
+    	    if (typeof resource === 'string') {
+    	      this[INTERNALS].url = resource;
+    	    } else if (resource instanceof SyncRequest) {
+    	      this[INTERNALS].url = resource.url;
+    	      if (!init.method) {
+    	        this[INTERNALS].method = resource.method;
+    	      }
+    	      if (!init.headers) {
+    	        this[INTERNALS].headers = resource.headers;
+    	      }
+    	      if (!init.body) {
+    	        this[INTERNALS].body = resource[INTERNALS].body;
+    	      }
+    	      if (!init.credentials) {
+    	        this[INTERNALS].credentials = resource.credentials;
+    	      }
+    	    } else {
+    	      throw new TypeError('Request input should be a URL string or a Request object')
+    	    }
+    	  }
+
+    	  get cache () {
+    	    return 'default'
+    	  }
+
+    	  get credentials () {
+    	    return this[INTERNALS].credentials
+    	  }
+
+    	  get destination () {
+    	    return ''
+    	  }
+
+    	  get headers () {
+    	    return this[INTERNALS].headers
+    	  }
+
+    	  get integrity () {
+    	    return ''
+    	  }
+
+    	  get method () {
+    	    return this[INTERNALS].method
+    	  }
+
+    	  get mode () {
+    	    return 'cors'
+    	  }
+
+    	  get priority () {
+    	    return 'auto'
+    	  }
+
+    	  get redirect () {
+    	    return 'follow'
+    	  }
+
+    	  get referrer () {
+    	    return 'about:client'
+    	  }
+
+    	  get referrerPolicy () {
+    	    return ''
+    	  }
+
+    	  get url () {
+    	    return this[INTERNALS].url
+    	  }
+
+    	  clone () {
+    	    checkBody(this);
+    	    return new SyncRequest(this.url, this[INTERNALS])
+    	  }
+    	}
+
+    	class SyncResponse {
+    	  constructor (body, init = {}) {
+    	    this[INTERNALS] = {
+    	      body: parseBody(body),
+    	      bodyUsed: false,
+
+    	      headers: new syncFetch.Headers(init.headers),
+    	      status: init.status,
+    	      statusText: init.statusText
+    	    };
+    	  }
+
+    	  get headers () {
+    	    return this[INTERNALS].headers
+    	  }
+
+    	  get ok () {
+    	    const status = this[INTERNALS].status;
+    	    return status >= 200 && status < 300
+    	  }
+
+    	  get redirected () {
+    	    return this[INTERNALS].redirected
+    	  }
+
+    	  get status () {
+    	    return this[INTERNALS].status
+    	  }
+
+    	  get statusText () {
+    	    return this[INTERNALS].statusText
+    	  }
+
+    	  get url () {
+    	    return this[INTERNALS].url
+    	  }
+
+    	  clone () {
+    	    return this.redirect(this[INTERNALS].url, this[INTERNALS].status)
+    	  }
+
+    	  redirect (url, status) {
+    	    checkBody(this);
+
+    	    const response = new SyncResponse(this[INTERNALS].body, {
+    	      headers: this[INTERNALS].headers,
+    	      status: status || this[INTERNALS].status,
+    	      statusText: HTTP_STATUS[status] || this[INTERNALS].statusText
+    	    });
+
+    	    response[INTERNALS].url = url || this[INTERNALS].url;
+    	    response[INTERNALS].redirected = this[INTERNALS].redirected;
+
+    	    return response
+    	  }
+    	}
+
+    	class Body {
+    	  constructor (body) {
+    	    this[INTERNALS] = {
+    	      body: parseBody(body),
+    	      bodyUsed: false
+    	    };
+    	  }
+
+    	  get bodyUsed () {
+    	    return this[INTERNALS].bodyUsed
+    	  }
+
+    	  static mixin (prototype) {
+    	    for (const name of Object.getOwnPropertyNames(Body.prototype)) {
+    	      if (name === 'constructor') { continue }
+    	      const desc = Object.getOwnPropertyDescriptor(Body.prototype, name);
+    	      Object.defineProperty(prototype, name, { ...desc, enumerable: true });
+    	    }
+    	  }
+
+    	  arrayBuffer () {
+    	    const buffer = consumeBody(this);
+    	    return buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)
+    	  }
+
+    	  blob () {
+    	    const type = this.headers && this.headers.get('content-type');
+    	    return new Blob([consumeBody(this)], type && { type })
+    	  }
+
+    	  text () {
+    	    return textDecoder.decode(consumeBody(this))
+    	  }
+
+    	  json () {
+    	    try {
+    	      return JSON.parse(this.text())
+    	    } catch (err) {
+    	      throw new TypeError(`invalid json response body at ${this.url} reason: ${err.message}`, 'invalid-json')
+    	    }
+    	  }
+    	}
+
+    	function checkBody (body) {
+    	  if (body.bodyUsed) {
+    	    throw new TypeError(`body used already for: ${body.url}`)
+    	  }
+    	}
+
+    	function consumeBody (body) {
+    	  checkBody(body);
+    	  body[INTERNALS].bodyUsed = true;
+    	  return body[INTERNALS].body || new Uint8Array()
+    	}
+
+    	function parseBody (body) {
+    	  if (typeof body === 'string') {
+    	    return textEncoder.encode(body)
+    	  } else if (body) {
+    	    return body
+    	  } else {
+    	    return null
+    	  }
+    	}
+
+    	Body.mixin(SyncRequest.prototype);
+    	Body.mixin(SyncResponse.prototype);
+
+    	class Headers {
+    	  constructor (headers) {
+    	    if (headers instanceof syncFetch.Headers) {
+    	      this[INTERNALS] = { ...headers[INTERNALS] };
+    	    } else {
+    	      this[INTERNALS] = {};
+
+    	      if (Array.isArray(headers)) {
+    	        for (const [name, value] of headers) {
+    	          this.append(name, value);
+    	        }
+    	      } else if (typeof headers === 'object') {
+    	        for (const name in headers) {
+    	          this.set(name, headers[name]);
+    	        }
+    	      }
+    	    }
+    	  }
+
+    	  // modification
+    	  append (name, value) {
+    	    name = name.toLowerCase();
+    	    if (!this[INTERNALS][name]) {
+    	      this[INTERNALS][name] = [];
+    	    }
+    	    this[INTERNALS][name].push(value);
+    	  }
+
+    	  delete (name) {
+    	    delete this[INTERNALS][name.toLowerCase()];
+    	  }
+
+    	  set (name, value) {
+    	    this[INTERNALS][name.toLowerCase()] = [value];
+    	  }
+
+    	  // access
+    	  entries () {
+    	    const pairs = [];
+    	    for (const name in this[INTERNALS]) {
+    	      for (const value of this[INTERNALS][name]) {
+    	        pairs.push([name, value]);
+    	      }
+    	    }
+    	    return pairs
+    	  }
+
+    	  get (name) {
+    	    name = name.toLowerCase();
+    	    return name in this[INTERNALS] ? this[INTERNALS][name].join(', ') : null
+    	  }
+
+    	  keys () {
+    	    return Object.keys(this[INTERNALS])
+    	  }
+
+    	  has (name) {
+    	    return name.toLowerCase() in this[INTERNALS]
+    	  }
+
+    	  values () {
+    	    const values = [];
+    	    for (const name in this[INTERNALS]) {
+    	      for (const value of this[INTERNALS][name]) {
+    	        values.push(value);
+    	      }
+    	    }
+    	    return values
+    	  }
+
+    	  * [Symbol.iterator] () {
+    	    for (const name in this[INTERNALS]) {
+    	      for (const value of this[INTERNALS][name]) {
+    	        yield [name, value];
+    	      }
+    	    }
+    	  }
+    	}
+
+    	syncFetch.Headers = Headers;
+    	syncFetch.Request = SyncRequest;
+    	syncFetch.Response = SyncResponse;
+    	browser = syncFetch;
+    	return browser;
+    }
+
+    var browserExports = requireBrowser();
+    var fetchSync = /*@__PURE__*/getDefaultExportFromCjs(browserExports);
+
+    const _createGameObjects$1 = mz.DataManager.createGameObjects;
     mz.DataManager.createGameObjects = function () {
         _createGameObjects$1.call(this);
         TrueWay._data = {};
         TrueWay.$dataMapAll = [];
-        isReady = false;
-        var promises = [];
-        var _loop_1 = function (info) {
+        for (const info of mz.$dataMapInfos) {
             if (!info)
-                return "continue";
-            var path = "data/Map".concat(String(info.id).padStart(3, '0'), ".json");
-            var promise = fetch(path).then(function (res) {
-                if (!res.ok)
-                    throw new TrueWayError("When fetching ".concat(path, ": ").concat(res.status, " ").concat(res.statusText));
-                return res.json();
-            }).then(function (data) {
-                var mapData = { mapVars: {} };
-                for (var _i = 0, _a = data.events; _i < _a.length; _i++) {
-                    var e = _a[_i];
-                    if (!e)
-                        continue;
-                    mapData[e.id] = {};
-                }
-                TrueWay._data[info.id] = mapData;
-                TrueWay.$dataMapAll[info.id] = data;
-            }).catch(function (e) { throw e; });
-            promises.push(promise);
-        };
-        for (var _i = 0, _a = mz.$dataMapInfos; _i < _a.length; _i++) {
-            var info = _a[_i];
-            _loop_1(info);
+                continue;
+            const path = `data/Map${String(info.id).padStart(3, '0')}.json`;
+            const data = fetchSync(path).json();
+            const mapData = { mapVars: {} };
+            for (const e of data.events) {
+                if (!e)
+                    continue;
+                mapData[e.id] = {};
+            }
+            TrueWay._data[info.id] = mapData;
+            TrueWay.$dataMapAll[info.id] = data;
         }
-        Promise.all(promises).then(function (_) {
-            isReady = true;
-        }).catch(function (e) { throw e; });
     };
-    var _Scene_Map_isReady = mz.Scene_Map.prototype.isReady;
-    mz.Scene_Map.prototype.isReady = function () {
-        return _Scene_Map_isReady.call(this) && isReady;
-    };
-    var _makeSaveContents = mz.DataManager.makeSaveContents;
+    const _makeSaveContents = mz.DataManager.makeSaveContents;
     mz.DataManager.makeSaveContents = function () {
-        var ret = _makeSaveContents.call(this);
+        const ret = _makeSaveContents.call(this);
         ret.name6666666_TrueWay = TrueWay._data;
         return ret;
     };
-    var _extractSaveContents = mz.DataManager.extractSaveContents;
+    const _extractSaveContents = mz.DataManager.extractSaveContents;
     mz.DataManager.extractSaveContents = function (contents) {
         _extractSaveContents.call(this, contents);
         TrueWay._data = contents.name6666666_TrueWay;
     };
 
     function solveMapTable() {
-        var temporaryTable = {};
+        const temporaryTable = {};
         function addNode(info) {
             if (info.id in temporaryTable)
                 return temporaryTable[info.id];
             if (info.parentId === 0) {
-                var ret_1 = {
+                const ret = {
                     name: info.name,
                     id: info.id,
                     parent: null,
                     children: []
                 };
-                temporaryTable[ret_1.id] = ret_1;
-                return ret_1;
+                temporaryTable[ret.id] = ret;
+                return ret;
             }
-            var parent = addNode(mz.$dataMapInfos[info.parentId]);
+            const parent = addNode(mz.$dataMapInfos[info.parentId]);
             temporaryTable[parent.id] = parent;
-            var ret = {
+            const ret = {
                 name: info.name,
                 id: info.id,
-                parent: parent,
+                parent,
                 children: []
             };
             parent.children.push(ret);
             temporaryTable[ret.id] = ret;
             return ret;
         }
-        for (var _i = 0, _a = mz.$dataMapInfos; _i < _a.length; _i++) {
-            var info = _a[_i];
+        for (const info of mz.$dataMapInfos) {
             if (!info)
                 continue;
             addNode(info);
         }
-        var mapTable = {};
-        var root = [];
-        for (var id in temporaryTable) {
-            var node = temporaryTable[id];
+        const mapTable = {};
+        const root = [];
+        for (const id in temporaryTable) {
+            const node = temporaryTable[id];
             if (node.parent === null)
                 root.push(node);
         }
         function addMapTable(table, node) {
-            var children = {};
-            for (var _i = 0, _a = node.children; _i < _a.length; _i++) {
-                var child = _a[_i];
+            const children = {};
+            for (const child of node.children) {
                 addMapTable(children, child);
             }
             if (node.name in table) {
-                throw new TrueWayError("Duplicated map name ".concat(node.name, ". Modify name or disable the key feature to pass"));
+                throw new TrueWayError(`Duplicated map name ${node.name}. Modify name or disable the key feature to pass`);
             }
             table[node.name] = {
                 id: node.id,
-                children: children
+                children
             };
         }
-        for (var _b = 0, root_1 = root; _b < root_1.length; _b++) {
-            var n = root_1[_b];
+        for (const n of root) {
             addMapTable(mapTable, n);
         }
-        var inverseMapTable = {};
+        const inverseMapTable = {};
         function addInverseMapTable(table, path) {
-            for (var name_1 in table) {
-                var map = table[name_1];
-                var newPath = __spreadArray(__spreadArray([], path, true), [name_1], false);
+            for (const name in table) {
+                const map = table[name];
+                const newPath = [...path, name];
                 inverseMapTable[map.id] = newPath;
                 addInverseMapTable(map.children, newPath);
             }
@@ -286,15 +630,16 @@
         return [mapTable, inverseMapTable];
     }
     function solveEventTable() {
-        var dataMapAll = TrueWay.$dataMapAll;
-        var ret = {};
-        for (var i in dataMapAll) {
-            var map = dataMapAll[i];
-            var events = {};
-            for (var _i = 0, _a = map.events; _i < _a.length; _i++) {
-                var e = _a[_i];
+        const dataMapAll = TrueWay.$dataMapAll;
+        const ret = {};
+        for (const i in dataMapAll) {
+            const map = dataMapAll[i];
+            const events = {};
+            for (const e of map.events) {
+                if (!e)
+                    continue;
                 if (e.name in events) {
-                    throw new TrueWayError("Duplicated event name ".concat(e.name, ". Modify name or disable the key feature to pass"));
+                    throw new TrueWayError(`Duplicated event name ${e.name}. Modify name or disable the key feature to pass`);
                 }
                 events[e.name] = e.id;
             }
@@ -319,31 +664,31 @@
         // @ts-ignore
         return new Proxy({}, {
             get: function (target, p, receiver) {
-                var ret = Reflect.get(TrueWay._data[mapId][eventId], p);
+                const ret = Reflect.get(TrueWay._data[mapId][eventId], p);
                 if (ret === undefined) {
                     switch (p) {
                         case 'map': TrueWay.getMapById(mapId);
                     }
-                    throw new TrueWayError("Unknown attribute ".concat(String(p), ", when access map ").concat(mapId, " event ").concat(eventId));
+                    throw new TrueWayError(`Unknown attribute ${String(p)}, when access map ${mapId} event ${eventId}`);
                 }
                 return ret;
             },
             set: function (target, p, newValue) {
                 if (newValue === undefined) {
-                    throw new TrueWayError("Can not assign attribute ".concat(String(p), " as undefined, when access map ").concat(mapId, " event ").concat(eventId));
+                    throw new TrueWayError(`Can not assign attribute ${String(p)} as undefined, when access map ${mapId} event ${eventId}`);
                 }
                 return Reflect.set(TrueWay._data[mapId][eventId], p, newValue);
             }
         });
     }
 
-    var mapTable;
-    var inverseMapTable;
-    var eventTable;
-    var _createGameObjects = mz.DataManager.createGameObjects;
+    let mapTable;
+    let inverseMapTable;
+    let eventTable;
+    const _createGameObjects = mz.DataManager.createGameObjects;
     mz.DataManager.createGameObjects = function () {
         _createGameObjects.call(this);
-        var _a = param.mapTable ? solveMapTable() : [null, null], a = _a[0], b = _a[1];
+        let [a, b] = param.mapTable ? solveMapTable() : [null, null];
         mapTable = a;
         inverseMapTable = b;
         eventTable = param.eventTable ? solveEventTable() : null;
@@ -351,33 +696,32 @@
     };
     if (!param.initMap)
         throw new TrueWayError('Parameter error. Essential label required');
-    var initAttrPattern = genReg(param.initMap);
+    const initAttrPattern = genReg(param.initMap);
     function initAttr() {
-        var dataMapAll = TrueWay.$dataMapAll;
-        for (var i in dataMapAll) {
-            var map = TrueWay.getMapById(Number(i));
-            var matches = dataMapAll[i].note.matchAll(initAttrPattern);
-            for (var _i = 0, matches_1 = matches; _i < matches_1.length; _i++) {
-                var match = matches_1[_i];
-                var script = match[1];
-                var func = new Function(param.map, script);
+        const dataMapAll = TrueWay.$dataMapAll;
+        for (const i in dataMapAll) {
+            const map = TrueWay.getMapById(Number(i));
+            const matches = dataMapAll[i].note.matchAll(initAttrPattern);
+            for (const match of matches) {
+                const script = match[1];
+                const func = new Function(param.map, script);
                 func(map);
             }
         }
     }
     function parent(id) {
-        var newId = mz.$dataMapInfos[id].parentId;
+        const newId = mz.$dataMapInfos[id].parentId;
         if (newId === 0)
-            throw new TrueWayError("Map ".concat(id, " has no parent"));
+            throw new TrueWayError(`Map ${id} has no parent`);
         return TrueWay.getMapById(newId);
     }
     // @ts-ignore
     TrueWay.getMapById = function (id) {
         if (!(id in TrueWay._data))
-            throw new TrueWayError("Unknown map id ".concat(id));
+            throw new TrueWayError(`Unknown map id ${id}`);
         return new Proxy({}, {
             get: function (target, p, receiver) {
-                var ret = Reflect.get(TrueWay._data[id].mapVars, p);
+                const ret = Reflect.get(TrueWay._data[id].mapVars, p);
                 if (ret === undefined) {
                     switch (p) {
                         case 'id': return id;
@@ -388,36 +732,36 @@
                         };
                         case 'getMapByName': return function (name) {
                             if (inverseMapTable === null || mapTable === null) {
-                                throw new TrueWayError("".concat(TrueWay.getMapByName.name, " unavailable. Particular configuration required"));
+                                throw new TrueWayError(`${TrueWay.getMapByName.name} unavailable. Particular configuration required`);
                             }
-                            var path = __spreadArray(__spreadArray([], inverseMapTable[id], true), [name], false);
-                            var target = mapTable[path[0]];
-                            for (var i in path) {
+                            const path = [...inverseMapTable[id], name];
+                            let target = mapTable[path[0]];
+                            for (const i in path) {
                                 if (i === '0')
                                     continue;
-                                var part = path[i];
+                                const part = path[i];
                                 target = target.children[part];
                             }
                             if (!(id in TrueWay._data))
-                                throw new TrueWayError("Unknown map name ".concat(name));
+                                throw new TrueWayError(`Unknown map name ${name}`);
                             return TrueWay.getMapById(target.id);
                         };
                         case 'getEventByName': return function (name) {
                             if (eventTable === null) {
-                                throw new TrueWayError("getEventByName unavailable. Particular configuration required");
+                                throw new TrueWayError(`getEventByName unavailable. Particular configuration required`);
                             }
-                            var events = eventTable[id];
-                            var eventId = events[name];
+                            const events = eventTable[id];
+                            const eventId = events[name];
                             return getEventByMapIdAndEventId(id, eventId);
                         };
                     }
-                    throw new TrueWayError("Unknown attribute ".concat(String(p), ", when access map ").concat(id));
+                    throw new TrueWayError(`Unknown attribute ${String(p)}, when access map ${id}`);
                 }
                 return ret;
             },
             set: function (target, p, newValue) {
                 if (newValue === undefined) {
-                    throw new TrueWayError("Can not assign attribute ".concat(String(p), " as undefined, when access map ").concat(id));
+                    throw new TrueWayError(`Can not assign attribute ${String(p)} as undefined, when access map ${id}`);
                 }
                 return Reflect.set(TrueWay._data[id].mapVars, p, newValue);
             }
@@ -425,35 +769,32 @@
     };
     TrueWay.getMapByName = function (name) {
         if (mapTable === null)
-            throw new TrueWayError("".concat(TrueWay.getMapByName.name, " unavailable. Particular configuration required"));
+            throw new TrueWayError(`${TrueWay.getMapByName.name} unavailable. Particular configuration required`);
         if (!(name in mapTable))
-            throw new TrueWayError("Map ".concat(name, " is not a top map. Can not use ").concat(TrueWay.getMapByName.name));
+            throw new TrueWayError(`Map ${name} is not a top map. Can not use ${TrueWay.getMapByName.name}`);
         return TrueWay.getMapById(mapTable[name].id);
     };
     TrueWay.getMapCurrent = function () {
         return TrueWay.getMapById(mz.$gameMap.mapId());
     };
-    var onEnterPattern;
+    let onEnterPattern;
     if (param.onEnter) {
-        var label = escapeStringRegexp(String(param.onEnter));
+        const label = escapeStringRegexp(String(param.onEnter));
         onEnterPattern = genReg(label);
     }
-    var _Game_Map_setup = mz.Game_Map.prototype.setup;
+    const _Game_Map_setup = mz.Game_Map.prototype.setup;
     mz.Game_Map.prototype.setup = function (mapId) {
         _Game_Map_setup.call(this, mapId);
-        var map = TrueWay.getMapCurrent();
+        const map = TrueWay.getMapCurrent();
         if (param.map) {
             // @ts-ignore
             window[param.map] = map;
         }
         if (param.onEnter) {
-            console.log(onEnterPattern);
-            console.log(mz.$dataMap.note.matchAll);
-            var matches = mz.$dataMap.note.matchAll(onEnterPattern);
-            for (var _i = 0, matches_2 = matches; _i < matches_2.length; _i++) {
-                var match = matches_2[_i];
-                var script = match[1];
-                var func = new Function(script);
+            const matches = mz.$dataMap.note.matchAll(onEnterPattern);
+            for (const match of matches) {
+                const script = match[1];
+                const func = new Function(script);
                 func();
             }
         }

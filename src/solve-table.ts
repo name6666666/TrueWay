@@ -87,6 +87,7 @@ export function solveEventTable(): EventTable {
         const map = dataMapAll[i]
         const events: {[name: string]: number} = {}
         for (const e of map.events) {
+            if (!e) continue
             if (e.name in events) {
                 throw new TrueWayError(`Duplicated event name ${e.name}. Modify name or disable the key feature to pass`)
             }
