@@ -22,7 +22,6 @@ declare global {
 
 // @ts-ignore
 window.TrueWay = {
-    _data: {},
     Error: TrueWayError
 }
 

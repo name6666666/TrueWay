@@ -6,44 +6,47 @@ import {param, TrueWayError} from './true-way'
 interface MapAttr {
     [attr: string]: any
     id: number
-    getParent: {(): MapAttr}
+    parent: MapAttr
+    entered: boolean
 }
 
 declare module './true-way' {
     interface TrueWayType {
-        getMapById: {(id: number): MapAttr | null}
-        getMapCurrent: {(): MapAttr | null}
+        getMapById: {(id: number): MapAttr}
+        getMapCurrent: {(): MapAttr}
     }
 }
 
-
+// @ts-ignore
 TrueWay.getMapById = function(id) {
-    if (!(id in TrueWay._data!)) return null
+    if (!(id in TrueWay._data!)) throw new TrueWayError(`Unknown map id ${id}`)
     return new Proxy({
-        id,
-        getParent() {
+        parent() {
             const newId = mz.$dataMapInfos[id].parentId
+            if (newId === 0) throw new TrueWayError(`Map ${id} has no parent`)
             return TrueWay.getMapById!(newId)
         }
     }, {
         get: function(target, p, receiver) {
-            const ret = Reflect.get(TrueWay._data![target.id].mapVars, p)
+            const ret = Reflect.get(TrueWay._data![id].mapVars, p)
             if (ret === undefined) {
-                if (p in target) {
-                    return Reflect.get(target, p, receiver)
+                switch (p) {
+                    case 'id': return id
+                    case 'parent': return target.parent()
+                    case 'entered': return false
                 }
-                throw new TrueWayError(`Unknown attribute ${String(p)}, when access map ${target.id}`)
+                throw new TrueWayError(`Unknown attribute ${String(p)}, when access map ${id}`)
             }
             return ret
         },
         set: function(target, p, newValue) {
             if (newValue === undefined) {
-                throw new TrueWayError(`Can not assign attribute ${String(p)} as undefined, when access map ${target.id}`)
+                throw new TrueWayError(`Can not assign attribute ${String(p)} as undefined, when access map ${id}`)
             }
-            const scope = TrueWay._data![target.id].mapVars
+            const scope = TrueWay._data![id].mapVars
             return Reflect.set(scope, p, newValue)
         }
-    }) as MapAttr
+    })
 }
 
 TrueWay.getMapCurrent = function() {

@@ -31,24 +31,20 @@
  * @url 6767
  * 
  * @param map
- * @text 全局变量map
- * @desc map总是当前地图的属性管理器
- * @type boolean
- * @default true
- * @on yes
- * @off no
+ * @text 对应当前地图的全局变量
+ * @desc 设置一个全局变量，它总是当前地图的属性管理器，为空禁用
+ * @type text
+ * @default map
  * 
  * @param self
- * @text 全局变量self
- * @desc self总是当前事件的属性管理器
- * @type boolean
- * @default true
- * @on yes
- * @off no
+ * @text 对应当前事件的全局变量
+ * @desc 设置一个全局变量，它总是当前事件的属性管理器，为空禁用
+ * @type text
+ * @default self
  * 
  * @param init
  * @text 初始化标签
- * @desc 设置初始化标签的名称
+ * @desc 设置初始化标签的名称，为空禁用
  * @type text
  * @default init
  */
@@ -104,7 +100,6 @@
     }(Error));
     // @ts-ignore
     window.TrueWay = {
-        _data: {},
         Error: TrueWayError
     };
     var param = mz.PluginManager.parameters('TrueWay');
@@ -112,7 +107,16 @@
     var _createGameObjects = mz.DataManager.createGameObjects;
     mz.DataManager.createGameObjects = function () {
         _createGameObjects.call(this);
-        TrueWay._data = {};
+        var initialData = {};
+        for (var _i = 0, _a = mz.$dataMapInfos; _i < _a.length; _i++) {
+            var info = _a[_i];
+            if (!info)
+                continue;
+            mz.DataManager.loadMapData(info.id);
+            var a = mz.$dataMap.note;
+            console.log(a);
+        }
+        TrueWay._data = initialData;
     };
     var _makeSaveContents = mz.DataManager.makeSaveContents;
     mz.DataManager.makeSaveContents = function () {
@@ -127,6 +131,8 @@
     };
 
     TrueWay.getMapById = function (id) {
+        if (!(id in TrueWay._data))
+            return null;
         return new Proxy({
             id: id,
             getParent: function () {
@@ -156,13 +162,12 @@
     TrueWay.getMapCurrent = function () {
         return TrueWay.getMapById(mz.$gameMap.mapId());
     };
-    var enabled = param.map === 'true';
-    if (enabled) {
+    if (param.map) {
         var _Game_Map_setup_1 = mz.Game_Map.prototype.setup;
         mz.Game_Map.prototype.setup = function (mapId) {
             _Game_Map_setup_1.call(this, mapId);
             // @ts-ignore
-            window.map = TrueWay.getMapCurrent();
+            window[param.map] = TrueWay.getMapCurrent();
         };
     }
 
@@ -178,6 +183,11 @@
     		.replace(/-/g, '\\x2d');
     }
 
+    var pattern;
+    if (param.init) {
+        var label = escapeStringRegexp(String(param.init));
+        pattern = new RegExp(String.raw(templateObject_1 || (templateObject_1 = __makeTemplateObject(["<", ">(((?!(</", ">))[sS])*?)</", ">"], ["<", ">(((?!(</", ">))[\\s\\S])*?)</", ">"])), label, label, label));
+    }
     var _Game_Map_setup = mz.Game_Map.prototype.setup;
     mz.Game_Map.prototype.setup = function (mapId) {
         _Game_Map_setup.call(this, mapId);
@@ -188,20 +198,16 @@
                 mapContent[e.eventId()] = {};
             }
             TrueWay._data[mapId] = mapContent;
-            parseComment();
+            if (param.init) {
+                var match = mz.$dataMap.note.match(pattern);
+                if (match !== null) {
+                    var script = match[1];
+                    var func = new Function(script);
+                    func();
+                }
+            }
         }
     };
-    var label = escapeStringRegexp(String(param.init));
-    var pattern = new RegExp(String.raw(templateObject_1 || (templateObject_1 = __makeTemplateObject(["<", ">(((?!(</", ">))[sS])*?)</", ">"], ["<", ">(((?!(</", ">))[\\s\\S])*?)</", ">"])), label, label, label));
-    console.log(param.init);
-    function parseComment() {
-        var match = mz.$dataMap.note.match(pattern);
-        if (match === null)
-            return;
-        var script = match[1];
-        var func = new Function(script);
-        func();
-    }
     var templateObject_1;
 
 })(window);

@@ -25,8 +25,10 @@
  * 设置属性
  * mapAttr.id
  * 内置属性————id，值为地图id
- * mapAttr.getParent
- * 内置属性————getParent，签名为(): MapAttr，获取父地图的属性管理器
+ * mapAttr.parent
+ * 内置属性————parent，值为父地图的属性管理器
+ * mapAttr.entered
+ * 内置属性————entered，值为是否进入过此地图
  * 
  * @url 6767
  * 
@@ -42,9 +44,9 @@
  * @type text
  * @default self
  * 
- * @param init
- * @text 初始化标签
- * @desc 设置初始化标签的名称，为空禁用
+ * @param onEnter
+ * @text 进入地图脚本标签
+ * @desc 进入地图时，在所有事件开始判定之间就执行的脚本的标签
  * @type text
- * @default init
+ * @default on-enter
  */
