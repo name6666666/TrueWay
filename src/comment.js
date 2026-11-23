@@ -50,6 +50,18 @@
  * @type text
  * @default on-enter
  * 
+ * @param initMap
+ * @text 初始化地图脚本标签
+ * @desc 在游戏启动时为每个地图初始化属性的脚本的标签，为空报错
+ * @type text
+ * @default init
+ * 
+ * @param initEvent
+ * @text 初始化事件脚本标签
+ * @desc 在游戏启动时为每个事件初始化属性的脚本的标签（应该在注释里写），为空报错
+ * @type text
+ * @default init
+ * 
  * @param mapTable
  * @text 地图名称建表
  * @desc 为地图名称建表，如此便能通过名称而非id获取地图属性管理器，代价是同一地图下无法创建同名子地图

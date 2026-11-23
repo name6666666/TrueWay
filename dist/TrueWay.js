@@ -263,6 +263,23 @@
         addInverseMapTable(mapTable, []);
         return [mapTable, inverseMapTable];
     }
+    function solveEventTable() {
+        var dataMapAll = TrueWay.$dataMapAll;
+        var ret = {};
+        for (var i in dataMapAll) {
+            var map = dataMapAll[i];
+            var events = {};
+            for (var _i = 0, _a = map.events; _i < _a.length; _i++) {
+                var e = _a[_i];
+                if (e.name in events) {
+                    throw new TrueWayError("Duplicated event name ".concat(e.name, ". Modify name or disable the key feature to pass"));
+                }
+                events[e.name] = e.id;
+            }
+            ret[i] = events;
+        }
+        return ret;
+    }
 
     function escapeStringRegexp(string) {
     	if (typeof string !== 'string') {
@@ -300,15 +317,14 @@
 
     var mapTable;
     var inverseMapTable;
+    var eventTable;
     var _createGameObjects = mz.DataManager.createGameObjects;
     mz.DataManager.createGameObjects = function () {
-        var _a;
         _createGameObjects.call(this);
-        if (param.mapTable) {
-            _a = solveMapTable(), mapTable = _a[0], inverseMapTable = _a[1];
-            console.log(mapTable);
-            console.log(inverseMapTable);
-        }
+        var _a = param.mapTable ? solveMapTable() : [null, null], a = _a[0], b = _a[1];
+        mapTable = a;
+        inverseMapTable = b;
+        eventTable = param.eventTable ? solveEventTable() : null;
     };
     function parent(id) {
         var newId = mz.$dataMapInfos[id].parentId;
@@ -335,7 +351,7 @@
                             if (inverseMapTable === null || mapTable === null) {
                                 throw new TrueWayError("".concat(TrueWay.getMapByName.name, " unavailable. Particular configuration required"));
                             }
-                            var path = inverseMapTable[id];
+                            var path = __spreadArray(__spreadArray([], inverseMapTable[id], true), [name], false);
                             var target = mapTable[path[0]];
                             for (var i in path) {
                                 if (i === '0')
@@ -343,7 +359,17 @@
                                 var part = path[i];
                                 target = target.children[part];
                             }
+                            if (!(id in TrueWay._data))
+                                throw new TrueWayError("Unknown map name ".concat(name));
                             return TrueWay.getMapById(target.id);
+                        };
+                        case 'getEventByName': return function (name) {
+                            if (eventTable === null) {
+                                throw new TrueWayError("getEventByName unavailable. Particular configuration required");
+                            }
+                            var events = eventTable[id];
+                            var eventId = events[name];
+                            return getEventByMapIdAndEventId(id, eventId);
                         };
                     }
                     throw new TrueWayError("Unknown attribute ".concat(String(p), ", when access map ").concat(id));

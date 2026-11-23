@@ -52,6 +52,22 @@ mz.DataManager.createGameObjects = function() {
     mapTable = a
     inverseMapTable = b
     eventTable = param.eventTable ? solveEventTable() : null
+    initAttr()
+}
+
+if (!param.initMap) throw new TrueWayError('Parameter error. Essential label required')
+const initAttrPattern = genReg(param.initMap)
+function initAttr() {
+    const dataMapAll = TrueWay.$dataMapAll!
+    for (const i in dataMapAll) {
+        const map = TrueWay.getMapById!(Number(i))
+        const matches = dataMapAll[i].note.matchAll(initAttrPattern)
+        for (const match of matches) {
+            const script = match[1]
+            const func = new Function(param.map, script)
+            func(map)
+        }
+    }
 }
 
 function parent(id: number): MapAttr {
@@ -125,11 +141,11 @@ TrueWay.getMapCurrent = function() {
 }
 
 
-let pattern: RegExp
+let onEnterPattern: RegExp
 
 if (param.onEnter) {
     const label = escape(String(param.onEnter))
-    pattern = genReg(label)
+    onEnterPattern = genReg(label)
 }
 
 const _Game_Map_setup = mz.Game_Map.prototype.setup
@@ -141,8 +157,8 @@ mz.Game_Map.prototype.setup = function(mapId) {
         window[param.map] = map
     }
     if (param.onEnter) {
-        const match = mz.$dataMap.note.match(pattern)
-        if (match !== null) {
+        const matches = mz.$dataMap.note.matchAll(onEnterPattern)
+        for (const match of matches) {
             const script = match[1]
             const func = new Function(script)
             func()

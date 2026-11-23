@@ -29,6 +29,8 @@ export interface Param {
     map: string
     self: string
     onEnter: string
+    initMap: string
+    initEvent: string
     mapTable: boolean
     eventTable: boolean
 }
@@ -38,6 +40,16 @@ originalParam.mapTable = originalParam.mapTable === 'true' ? true : false
 originalParam.eventTable = originalParam.eventTable === 'true' ? true : false
 // @ts-ignore
 export const param: Param = originalParam
+
+const identifierRegex = /^[\p{ID_Start}\p{ID_Continue}]*$/u
+for (const ident of [
+    param.map, param.self, param.onEnter, param.initMap, param.initEvent
+]) {
+    const match = ident.match(identifierRegex)
+    if (match === null) {
+        throw new TrueWayError(`Invailid identifier ${ident}`)
+    }
+}
 
 export function genReg(label: string): RegExp {
     return new RegExp(String.raw`<${label}>(((?!(</${label}>))[\s\S])*?)</${label}>`)
