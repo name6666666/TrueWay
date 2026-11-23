@@ -8,17 +8,13 @@ declare module 'rmmz' {
     }
 }
 
-function syncSleep(ms: number) {
-    const sab = new SharedArrayBuffer(4)
-    const int32 = new Int32Array(sab)
-    Atomics.wait(int32, 0, 0, ms)
-}
+let isReady = false
 
 const _createGameObjects = mz.DataManager.createGameObjects
 mz.DataManager.createGameObjects = function() {
     _createGameObjects.call(this)
     TrueWay._data = {}
-    let ready = false
+    isReady = false
     const promises: Promise<void>[] = []
     for (const info of mz.$dataMapInfos) {
         if (!info) continue
@@ -37,9 +33,13 @@ mz.DataManager.createGameObjects = function() {
         promises.push(promise)
     }
     Promise.all(promises).then(_ => {
-        ready = true
-    })
-    while (!ready) syncSleep(10)
+        isReady = true
+    }).catch(e => {throw e})
+}
+
+const _Scene_Map_isReady = mz.Scene_Map.prototype.isReady;
+mz.Scene_Map.prototype.isReady = function() {
+    return _Scene_Map_isReady.call(this) && isReady;
 }
 
 const _makeSaveContents = mz.DataManager.makeSaveContents

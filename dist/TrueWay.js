@@ -110,15 +110,18 @@
     }
     var templateObject_1;
 
+    var isReady = false;
     var _createGameObjects = mz.DataManager.createGameObjects;
     mz.DataManager.createGameObjects = function () {
         _createGameObjects.call(this);
         TrueWay._data = {};
+        isReady = false;
+        var promises = [];
         var _loop_1 = function (info) {
             if (!info)
                 return "continue";
             var path = "data/Map".concat(String(info.id).padStart(3, '0'), ".json");
-            fetch(path).then(function (res) {
+            var promise = fetch(path).then(function (res) {
                 if (!res.ok)
                     throw new TrueWayError("When fetching ".concat(path, ": ").concat(res.status, " ").concat(res.statusText));
                 return res.json();
@@ -132,11 +135,19 @@
                 }
                 TrueWay._data[info.id] = mapData;
             }).catch(function (e) { throw e; });
+            promises.push(promise);
         };
         for (var _i = 0, _a = mz.$dataMapInfos; _i < _a.length; _i++) {
             var info = _a[_i];
             _loop_1(info);
         }
+        Promise.all(promises).then(function (_) {
+            isReady = true;
+        }).catch(function (e) { throw e; });
+    };
+    var _Scene_Map_isReady = mz.Scene_Map.prototype.isReady;
+    mz.Scene_Map.prototype.isReady = function () {
+        return _Scene_Map_isReady.call(this) && isReady;
     };
     var _makeSaveContents = mz.DataManager.makeSaveContents;
     mz.DataManager.makeSaveContents = function () {
