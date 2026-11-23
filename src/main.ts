@@ -1,4 +1,5 @@
 import './true-way'
 import './storage'
+import './solve-table'
 import './map-attr'
 import './event-attr'

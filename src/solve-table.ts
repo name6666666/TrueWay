@@ -1,5 +1,6 @@
 import mz from 'rmmz'
 import { InverseMapTable, MapTable } from './map-attr'
+import { TrueWayError } from './true-way'
 
 
 interface Node {
@@ -52,6 +53,9 @@ export function solveMapTable(): [MapTable, InverseMapTable] {
         const children: MapTable = {}
         for (const child of node.children) {
             addMapTable(children, child)
+        }
+        if (node.name in table) {
+            throw new TrueWayError(`Duplicated map name ${node.name}. Modify name or disable the key feature to pass`)
         }
         table[node.name] = {
             id: node.id,

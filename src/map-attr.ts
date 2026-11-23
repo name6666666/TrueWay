@@ -34,7 +34,16 @@ export interface InverseMapTable {
     [id: number]: string[]
 }
 
-const [mapTable, inverseMapTable]: [MapTable | null, InverseMapTable | null] = param.mapTable ? solveMapTable() : [null, null]
+let mapTable: MapTable
+let inverseMapTable: InverseMapTable
+
+const _createGameObjects = mz.DataManager.createGameObjects
+mz.DataManager.createGameObjects = function() {
+    _createGameObjects.call(this)
+    if (param.mapTable) {
+        [mapTable, inverseMapTable] = solveMapTable()
+    }
+}
 
 function parent(id: number): MapAttr {
     const newId = mz.$dataMapInfos[id].parentId

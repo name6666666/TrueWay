@@ -46,9 +46,25 @@
  * 
  * @param onEnter
  * @text 进入地图脚本标签
- * @desc 进入地图时，在所有事件开始判定之间就执行的脚本的标签
+ * @desc 进入地图时，在所有事件开始判定之间就执行的脚本的标签，为空禁用
  * @type text
  * @default on-enter
+ * 
+ * @param mapTable
+ * @text 地图名称建表
+ * @desc 为地图名称建表，如此便能通过名称而非id获取地图属性管理器，代价是同一地图下无法创建同名子地图
+ * @type boolean
+ * @default true
+ * @on yes
+ * @off no
+ * 
+ * @param eventTable
+ * @text 事件名称建表
+ * @desc 为事件名称建表，如此便能通过名称而非id获取事件属性管理器，代价是同一地图下无法创建同名事件
+ * @type boolean
+ * @default true
+ * @on yes
+ * @off no
  */
 (function (mz) {
     'use strict';
@@ -84,6 +100,16 @@
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     }
 
+    function __spreadArray(to, from, pack) {
+        if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+            if (ar || !(i in from)) {
+                if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+                ar[i] = from[i];
+            }
+        }
+        return to.concat(ar || Array.prototype.slice.call(from));
+    }
+
     function __makeTemplateObject(cooked, raw) {
         if (Object.defineProperty) { Object.defineProperty(cooked, "raw", { value: raw }); } else { cooked.raw = raw; }
         return cooked;
@@ -104,7 +130,11 @@
     window.TrueWay = {
         Error: TrueWayError
     };
-    var param = mz.PluginManager.parameters('TrueWay');
+    var originalParam = mz.PluginManager.parameters('TrueWay');
+    originalParam.mapTable = originalParam.mapTable === 'true' ? true : false;
+    originalParam.eventTable = originalParam.eventTable === 'true' ? true : false;
+    // @ts-ignore
+    var param = originalParam;
     function genReg(label) {
         return new RegExp(String.raw(templateObject_1 || (templateObject_1 = __makeTemplateObject(["<", ">(((?!(</", ">))[sS])*?)</", ">"], ["<", ">(((?!(</", ">))[\\s\\S])*?)</", ">"])), label, label, label));
     }
@@ -134,6 +164,7 @@
                     mapData[e.id] = {};
                 }
                 TrueWay._data[info.id] = mapData;
+                TrueWay.$dataMapAll[info.id] = data;
             }).catch(function (e) { throw e; });
             promises.push(promise);
         };
@@ -160,6 +191,74 @@
         _extractSaveContents.call(this, contents);
         TrueWay._data = contents.name6666666_TrueWay;
     };
+
+    function solveMapTable() {
+        var temporaryTable = {};
+        function addNode(info) {
+            if (info.id in temporaryTable)
+                return temporaryTable[info.id];
+            if (info.parentId === 0) {
+                var ret_1 = {
+                    name: info.name,
+                    id: info.id,
+                    parent: null,
+                    children: []
+                };
+                temporaryTable[ret_1.id] = ret_1;
+                return ret_1;
+            }
+            var parent = addNode(mz.$dataMapInfos[info.parentId]);
+            temporaryTable[parent.id] = parent;
+            var ret = {
+                name: info.name,
+                id: info.id,
+                parent: parent,
+                children: []
+            };
+            parent.children.push(ret);
+            temporaryTable[ret.id] = ret;
+            return ret;
+        }
+        for (var _i = 0, _a = mz.$dataMapInfos; _i < _a.length; _i++) {
+            var info = _a[_i];
+            if (!info)
+                continue;
+            addNode(info);
+        }
+        var mapTable = {};
+        var root = [];
+        for (var id in temporaryTable) {
+            var node = temporaryTable[id];
+            if (node.parent === null)
+                root.push(node);
+        }
+        function addMapTable(table, node) {
+            var children = {};
+            for (var _i = 0, _a = node.children; _i < _a.length; _i++) {
+                var child = _a[_i];
+                addMapTable(children, child);
+            }
+            table[node.name] = {
+                id: node.id,
+                children: children
+            };
+        }
+        for (var _b = 0, root_1 = root; _b < root_1.length; _b++) {
+            var n = root_1[_b];
+            addMapTable(mapTable, n);
+        }
+        var inverseMapTable = {};
+        function addInverseMapTable(table, path) {
+            for (var name_1 in table) {
+                var map = table[name_1];
+                var newPath = __spreadArray(__spreadArray([], path, true), [name_1], false);
+                inverseMapTable[map.id] = newPath;
+                addInverseMapTable(map.children, newPath);
+            }
+        }
+        addInverseMapTable(mapTable, []);
+        return [mapTable, inverseMapTable];
+    }
 
     function escapeStringRegexp(string) {
     	if (typeof string !== 'string') {
@@ -195,6 +294,7 @@
         });
     }
 
+    var _a = param.mapTable ? solveMapTable() : [null, null], mapTable = _a[0], inverseMapTable = _a[1];
     function parent(id) {
         var newId = mz.$dataMapInfos[id].parentId;
         if (newId === 0)
@@ -216,6 +316,20 @@
                         case 'getEventById': return function (eventId) {
                             return getEventByMapIdAndEventId(id, eventId);
                         };
+                        case 'getMapByName': return function (name) {
+                            if (inverseMapTable === null || mapTable === null) {
+                                throw new TrueWayError("".concat(TrueWay.getMapByName.name, " unavailable. Particular configuration required"));
+                            }
+                            var path = inverseMapTable[id];
+                            var target = mapTable[path[0]];
+                            for (var i in path) {
+                                if (i === '0')
+                                    continue;
+                                var part = path[i];
+                                target = target.children[part];
+                            }
+                            return TrueWay.getMapById(target.id);
+                        };
                     }
                     throw new TrueWayError("Unknown attribute ".concat(String(p), ", when access map ").concat(id));
                 }
@@ -228,6 +342,13 @@
                 return Reflect.set(TrueWay._data[id].mapVars, p, newValue);
             }
         });
+    };
+    TrueWay.getMapByName = function (name) {
+        if (mapTable === null)
+            throw new TrueWayError("".concat(TrueWay.getMapByName.name, " unavailable. Particular configuration required"));
+        if (!(name in mapTable))
+            throw new TrueWayError("Map ".concat(name, " is not a top map. Can not use ").concat(TrueWay.getMapByName.name));
+        return TrueWay.getMapById(mapTable[name].id);
     };
     TrueWay.getMapCurrent = function () {
         return TrueWay.getMapById(mz.$gameMap.mapId());
