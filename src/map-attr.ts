@@ -3,7 +3,7 @@ import {genReg, param, TrueWayError} from './true-way'
 import escape from 'escape-string-regexp'
 
 
-interface MapAttr {
+export interface MapAttr {
     [attr: string]: any
     id: number
     parent: MapAttr
@@ -17,22 +17,22 @@ declare module './true-way' {
     }
 }
 
+function parent(id: number): MapAttr {
+    const newId = mz.$dataMapInfos[id].parentId
+    if (newId === 0) throw new TrueWayError(`Map ${id} has no parent`)
+    return TrueWay.getMapById!(newId)
+}
+
 // @ts-ignore
 TrueWay.getMapById = function(id) {
     if (!(id in TrueWay._data!)) throw new TrueWayError(`Unknown map id ${id}`)
-    return new Proxy({
-        parent() {
-            const newId = mz.$dataMapInfos[id].parentId
-            if (newId === 0) throw new TrueWayError(`Map ${id} has no parent`)
-            return TrueWay.getMapById!(newId)
-        }
-    }, {
+    return new Proxy({}, {
         get: function(target, p, receiver) {
             const ret = Reflect.get(TrueWay._data![id].mapVars, p)
             if (ret === undefined) {
                 switch (p) {
                     case 'id': return id
-                    case 'parent': return target.parent()
+                    case 'parent': return parent(id)
                     case 'entered': return false
                 }
                 throw new TrueWayError(`Unknown attribute ${String(p)}, when access map ${id}`)
