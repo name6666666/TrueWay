@@ -8,6 +8,12 @@ declare module 'rmmz' {
     }
 }
 
+declare module './true-way' {
+    interface TrueWayType {
+        $dataMapAll: mz.DataMap[]
+    }
+}
+
 let isReady = false
 
 const _createGameObjects = mz.DataManager.createGameObjects
@@ -29,6 +35,7 @@ mz.DataManager.createGameObjects = function() {
                 mapData[e.id] = {}
             }
             TrueWay._data![info.id] = mapData
+            TrueWay.$dataMapAll![info.id] = data
         }).catch(e => {throw e})
         promises.push(promise)
     }

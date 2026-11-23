@@ -2,6 +2,7 @@ import mz from 'rmmz'
 import {genReg, param, TrueWayError} from './true-way'
 import escape from 'escape-string-regexp'
 import { EventAttr, getEventByMapIdAndEventId } from './event-attr'
+import './storage'
 
 
 export interface MapAttr {
@@ -15,6 +16,7 @@ export interface MapAttr {
 declare module './true-way' {
     interface TrueWayType {
         getMapById: {(id: number): MapAttr}
+        getMapByName: {(name: string): MapAttr}
         getMapCurrent: {(): MapAttr}
     }
 }
@@ -51,6 +53,42 @@ TrueWay.getMapById = function(id) {
             return Reflect.set(TrueWay._data![id].mapVars, p, newValue)
         }
     })
+}
+
+function solveMapTable(): MapTable {
+    interface Node {
+        parent: Node
+        name: string
+        id: number
+        children: Node[]
+    }
+    const temporaryTable: Node[] = []
+    function addNode(info: mz.DataMapInfo): Node {
+        return {
+            name: info.name,
+            id: info.id,
+            parent: addNode(mz.$dataMapInfos[info.parentId]),
+            children: []
+        }
+    }
+    for (const info of mz.$dataMapInfos) {
+        temporaryTable.push(addNode(info))
+    }
+}
+
+interface MapTable {
+    [name: string]: {
+        id: number
+        children: MapTable[]
+    }
+}
+
+const mapTable: MapTable | null = param.mapTable ? solveMapTable() : null
+
+TrueWay.getMapByName = function(name) {
+    if (mapTable === null) throw new TrueWayError(`${TrueWay.getMapByName!.name} unavailable. Particular configuration required`)
+    if (!(name in mapTable)) throw new TrueWayError(`Map ${name} is not a top map. Can not use ${TrueWay.getMapByName!.name}`)
+    return TrueWay.getMapById!(mapTable[name].id)
 }
 
 TrueWay.getMapCurrent = function() {

@@ -25,7 +25,19 @@ window.TrueWay = {
     Error: TrueWayError
 }
 
-export const param = mz.PluginManager.parameters('TrueWay')
+export interface Param {
+    map: string
+    self: string
+    onEnter: string
+    mapTable: boolean
+    eventTable: boolean
+}
+
+const originalParam = mz.PluginManager.parameters('TrueWay')
+originalParam.mapTable = originalParam.mapTable === 'true' ? true : false
+originalParam.eventTable = originalParam.eventTable === 'true' ? true : false
+// @ts-ignore
+export const param: Param = originalParam
 
 export function genReg(label: string): RegExp {
     return new RegExp(String.raw`<${label}>(((?!(</${label}>))[\s\S])*?)</${label}>`)

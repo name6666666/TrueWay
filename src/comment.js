@@ -46,7 +46,23 @@
  * 
  * @param onEnter
  * @text 进入地图脚本标签
- * @desc 进入地图时，在所有事件开始判定之间就执行的脚本的标签
+ * @desc 进入地图时，在所有事件开始判定之间就执行的脚本的标签，为空禁用
  * @type text
  * @default on-enter
+ * 
+ * @param mapTable
+ * @text 地图名称建表
+ * @desc 为地图名称建表，如此便能通过名称而非id获取地图属性管理器，代价是同一地图下无法创建同名子地图
+ * @type boolean
+ * @default true
+ * @on yes
+ * @off no
+ * 
+ * @param eventTable
+ * @text 事件名称建表
+ * @desc 为事件名称建表，如此便能通过名称而非id获取事件属性管理器，代价是同一地图下无法创建同名事件
+ * @type boolean
+ * @default true
+ * @on yes
+ * @off no
  */
