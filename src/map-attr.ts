@@ -3,6 +3,7 @@ import {genReg, param, TrueWayError} from './true-way'
 import escape from 'escape-string-regexp'
 import { EventAttr, getEventByMapIdAndEventId } from './event-attr'
 import './storage'
+import { solveMapTable } from './solve-table'
 
 
 export interface MapAttr {
@@ -11,6 +12,7 @@ export interface MapAttr {
     parent: MapAttr
     entered: boolean
     getEventById: {(id: number): EventAttr}
+    getMapByName: {(name: string): MapAttr}
 }
 
 declare module './true-way' {
@@ -20,6 +22,19 @@ declare module './true-way' {
         getMapCurrent: {(): MapAttr}
     }
 }
+
+export interface MapTable {
+    [name: string]: {
+        id: number
+        children: MapTable
+    }
+}
+
+export interface InverseMapTable {
+    [id: number]: string[]
+}
+
+const [mapTable, inverseMapTable]: [MapTable | null, InverseMapTable | null] = param.mapTable ? solveMapTable() : [null, null]
 
 function parent(id: number): MapAttr {
     const newId = mz.$dataMapInfos[id].parentId
@@ -41,6 +56,21 @@ TrueWay.getMapById = function(id) {
                     case 'getEventById': return function(eventId: number): EventAttr {
                         return getEventByMapIdAndEventId(id, eventId)
                     }
+                    case 'getMapByName': return function(name: string): MapAttr {
+                        if (inverseMapTable === null || mapTable === null) {
+                            throw new TrueWayError(
+                                `${TrueWay.getMapByName!.name} unavailable. Particular configuration required`
+                            )
+                        }
+                        const path = inverseMapTable[id]
+                        let target = mapTable[path[0]]
+                        for (const i in path) {
+                            if (i === '0') continue
+                            const part = path[i]
+                            target = target.children[part]
+                        }
+                        return TrueWay.getMapById!(target.id)
+                    }
                 }
                 throw new TrueWayError(`Unknown attribute ${String(p)}, when access map ${id}`)
             }
@@ -54,36 +84,6 @@ TrueWay.getMapById = function(id) {
         }
     })
 }
-
-function solveMapTable(): MapTable {
-    interface Node {
-        parent: Node
-        name: string
-        id: number
-        children: Node[]
-    }
-    const temporaryTable: Node[] = []
-    function addNode(info: mz.DataMapInfo): Node {
-        return {
-            name: info.name,
-            id: info.id,
-            parent: addNode(mz.$dataMapInfos[info.parentId]),
-            children: []
-        }
-    }
-    for (const info of mz.$dataMapInfos) {
-        temporaryTable.push(addNode(info))
-    }
-}
-
-interface MapTable {
-    [name: string]: {
-        id: number
-        children: MapTable[]
-    }
-}
-
-const mapTable: MapTable | null = param.mapTable ? solveMapTable() : null
 
 TrueWay.getMapByName = function(name) {
     if (mapTable === null) throw new TrueWayError(`${TrueWay.getMapByName!.name} unavailable. Particular configuration required`)
