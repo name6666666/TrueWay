@@ -8,16 +8,25 @@ declare module 'rmmz' {
     }
 }
 
+function syncSleep(ms: number) {
+    const sab = new SharedArrayBuffer(4)
+    const int32 = new Int32Array(sab)
+    Atomics.wait(int32, 0, 0, ms)
+}
+
 const _createGameObjects = mz.DataManager.createGameObjects
 mz.DataManager.createGameObjects = function() {
     _createGameObjects.call(this)
+    TrueWay._data = {}
+    let ready = false
+    const promises: Promise<void>[] = []
     for (const info of mz.$dataMapInfos) {
         if (!info) continue
         const path = `data/Map${String(info.id).padStart(3, '0')}.json`
-        fetch(path).then(res => {
+        const promise = fetch(path).then(res => {
             if (!res.ok) throw new TrueWayError(`When fetching ${path}: ${res.status} ${res.statusText}`)
             return res.json()
-        }).then(data => {
+        }).then((data: mz.DataMap) => {
             const mapData: MapData = {mapVars: {}}
             for (const e of data.events) {
                 if (!e) continue
@@ -25,7 +34,12 @@ mz.DataManager.createGameObjects = function() {
             }
             TrueWay._data![info.id] = mapData
         }).catch(e => {throw e})
+        promises.push(promise)
     }
+    Promise.all(promises).then(_ => {
+        ready = true
+    })
+    while (!ready) syncSleep(10)
 }
 
 const _makeSaveContents = mz.DataManager.makeSaveContents

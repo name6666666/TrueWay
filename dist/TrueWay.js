@@ -113,29 +113,30 @@
     var _createGameObjects = mz.DataManager.createGameObjects;
     mz.DataManager.createGameObjects = function () {
         _createGameObjects.call(this);
-        var initialData = {};
-        for (var _i = 0, _a = mz.$dataMapInfos; _i < _a.length; _i++) {
-            var info = _a[_i];
+        TrueWay._data = {};
+        var _loop_1 = function (info) {
             if (!info)
-                continue;
+                return "continue";
             var path = "data/Map".concat(String(info.id).padStart(3, '0'), ".json");
-            var data = fetch(path).then(function (res) {
+            fetch(path).then(function (res) {
                 if (!res.ok)
-                    throw new Error("".concat(res.status, ": ").concat(res.statusText));
+                    throw new TrueWayError("When fetching ".concat(path, ": ").concat(res.status, " ").concat(res.statusText));
                 return res.json();
             }).then(function (data) {
-                console.log(data);
+                var mapData = { mapVars: {} };
+                for (var _i = 0, _a = data.events; _i < _a.length; _i++) {
+                    var e = _a[_i];
+                    if (!e)
+                        continue;
+                    mapData[e.id] = {};
+                }
+                TrueWay._data[info.id] = mapData;
             }).catch(function (e) { throw e; });
-            var mapData = { mapVars: {} };
-            for (var _b = 0, _c = data.events; _b < _c.length; _b++) {
-                var e = _c[_b];
-                if (!e)
-                    continue;
-                mapData[e.id] = {};
-            }
-            initialData[info.id] = mapData;
+        };
+        for (var _i = 0, _a = mz.$dataMapInfos; _i < _a.length; _i++) {
+            var info = _a[_i];
+            _loop_1(info);
         }
-        TrueWay._data = initialData;
     };
     var _makeSaveContents = mz.DataManager.makeSaveContents;
     mz.DataManager.makeSaveContents = function () {
