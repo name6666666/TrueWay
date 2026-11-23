@@ -15,7 +15,8 @@ export function getEventByMapIdAndEventId(mapId: number, eventId: number): Event
             const ret = Reflect.get(TrueWay._data![mapId][eventId], p)
             if (ret === undefined) {
                 switch (p) {
-                    case 'map': TrueWay.getMapById!(mapId)
+                    case 'id': return eventId
+                    case 'map': return TrueWay.getMapById!(mapId)
                 }
                 throw new TrueWayError(`Unknown attribute ${String(p)}, when access map ${mapId} event ${eventId}`)
             }

@@ -688,7 +688,6 @@
             // @ts-ignore
             const script = cmd.parameters[3].script;
             const self = getEventByMapIdAndEventId(mapId, eventId);
-            console.log(script);
             const func = new Function(param.self, script);
             func(self);
         }
@@ -711,6 +710,20 @@
                     }
                 }
             }
+        }
+    };
+    TrueWay.getEventCurrent = function () {
+        const mapId = mz.$gameMap.mapId();
+        const eventId = mz.$gameMap._interpreter.eventId();
+        return getEventByMapIdAndEventId(mapId, eventId);
+    };
+    const _Game_Map_setup$1 = mz.Game_Map.prototype.setup;
+    mz.Game_Map.prototype.setup = function (mapId) {
+        _Game_Map_setup$1.call(this, mapId);
+        const self = TrueWay.getEventCurrent();
+        if (param.self) {
+            // @ts-ignore
+            window[param.self] = self;
         }
     };
 

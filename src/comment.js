@@ -12,23 +12,71 @@
  * 么不可以有？为什么不让地图以父子关系，事件以位置关系作为相对关系，让相对
  * 关系作为纽带，把几个事件或几个地图抽象为一个整体的组件？
  * 
+ * js接口：
+ * 
  * TrueWay.getMapById(id: number): MapAttr
- * 以地图id获取地图的属性管理器
+ * 用地图id获取地图的属性管理器
  * 
  * TrueWay.getMapCurrent(): MapAttr
  * 获取当前地图的属性管理器
  * 
- * let mapAttr: MapAttr
+ * TrueWay.getMapByName(name: string): MapAttr
+ * 用名称获取顶层地图的属性管理器
+ * 
+ * TrueWay.getEventCurrent(): EventAttr
+ * 获取当前事件的属性管理器
+ * 
+ * 对于一个地图的属性管理器mapAttr
  * mapAttr.foo
  * 获取属性
  * mapAttr.foo = 67
  * 设置属性
  * mapAttr.id
- * 内置属性————id，值为地图id
+ * 内置属性，值为地图id
  * mapAttr.parent
- * 内置属性————parent，值为父地图的属性管理器
+ * 内置属性，值为父地图的属性管理器
  * mapAttr.entered
- * 内置属性————entered，值为是否进入过此地图
+ * 内置属性，值为是否进入过此地图
+ * mapAttr.getMapByName(name: string): MapAttr
+ * 用名称获取子地图的属性管理器
+ * mapAttr.getEventById(id: number): EventAttr
+ * 用事件id获取地图里的事件的属性管理器
+ * mapAttr.getEventByName(name: string): EventAttr
+ * 用事件名称获取地图里的事件的属性管理器
+ * 
+ * 对于一个事件的属性管理器eventAttr
+ * eventAttr.foo
+ * 获取属性
+ * eventAttr.foo = 67
+ * 设置属性
+ * eventAttr.id
+ * 内置属性，值为事件id
+ * eventAttr.map
+ * 内置属性，值为所属地图的属性管理器
+ * 
+ * 地图标签：
+ * 
+ * <onEnter>
+ * if (map.entered) {
+ *   console.log('这里来过了')
+ * }
+ * </onEnter>
+ * onEnter会在每次切换或进入地图时被调用
+ * 
+ * <init>
+ * map.myAttr = 67
+ * console.log('属性已设置')
+ * </init>
+ * init会在游戏启动时被调用，且会注入此地图属性管理器变量
+ * 
+ * 插件指令：
+ * 
+ * 初始化事件脚本指令的示例如下
+ * 
+ * 脚本 = self.myAttr = 67
+ * console.log('属性已设置')
+ * 
+ * 在事件执行到它时，实际上只会执行一个空函数，它只用于在游戏启动阶段执行
  * 
  * @url 6767
  * 
@@ -61,6 +109,7 @@
  * @desc 编写在游戏启动时为事件初始化属性的脚本，不受事件系统约束，一定会在游戏刚启动时执行
  * @arg script
  * @text 脚本
+ * @desc 在游戏启动时为事件初始化属性的脚本，不受事件系统约束，一定会在游戏刚启动时执行
  * @type multiline_string
  * 
  * @param mapTable
