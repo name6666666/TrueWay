@@ -1,6 +1,7 @@
 import mz from 'rmmz'
 import {genReg, param, TrueWayError} from './true-way'
 import escape from 'escape-string-regexp'
+import { EventAttr, getEventByMapIdAndEventId } from './event-attr'
 
 
 export interface MapAttr {
@@ -8,6 +9,7 @@ export interface MapAttr {
     id: number
     parent: MapAttr
     entered: boolean
+    getEventById: {(id: number): EventAttr}
 }
 
 declare module './true-way' {
@@ -34,6 +36,9 @@ TrueWay.getMapById = function(id) {
                     case 'id': return id
                     case 'parent': return parent(id)
                     case 'entered': return false
+                    case 'getEventById': return function(eventId: number): EventAttr {
+                        return getEventByMapIdAndEventId(id, eventId)
+                    }
                 }
                 throw new TrueWayError(`Unknown attribute ${String(p)}, when access map ${id}`)
             }
@@ -43,8 +48,7 @@ TrueWay.getMapById = function(id) {
             if (newValue === undefined) {
                 throw new TrueWayError(`Can not assign attribute ${String(p)} as undefined, when access map ${id}`)
             }
-            const scope = TrueWay._data![id].mapVars
-            return Reflect.set(scope, p, newValue)
+            return Reflect.set(TrueWay._data![id].mapVars, p, newValue)
         }
     })
 }
