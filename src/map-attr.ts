@@ -71,13 +71,14 @@ TrueWay.getMapById = function(id) {
                                 `${TrueWay.getMapByName!.name} unavailable. Particular configuration required`
                             )
                         }
-                        const path = inverseMapTable[id]
+                        const path = [...inverseMapTable[id], name]
                         let target = mapTable[path[0]]
                         for (const i in path) {
                             if (i === '0') continue
                             const part = path[i]
                             target = target.children[part]
                         }
+                        if (!(id in TrueWay._data!)) throw new TrueWayError(`Unknown map name ${name}`)
                         return TrueWay.getMapById!(target.id)
                     }
                 }

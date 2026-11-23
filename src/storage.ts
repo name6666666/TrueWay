@@ -20,6 +20,7 @@ const _createGameObjects = mz.DataManager.createGameObjects
 mz.DataManager.createGameObjects = function() {
     _createGameObjects.call(this)
     TrueWay._data = {}
+    TrueWay.$dataMapAll = []
     isReady = false
     const promises: Promise<void>[] = []
     for (const info of mz.$dataMapInfos) {

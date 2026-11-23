@@ -141,10 +141,11 @@
     var templateObject_1;
 
     var isReady = false;
-    var _createGameObjects = mz.DataManager.createGameObjects;
+    var _createGameObjects$1 = mz.DataManager.createGameObjects;
     mz.DataManager.createGameObjects = function () {
-        _createGameObjects.call(this);
+        _createGameObjects$1.call(this);
         TrueWay._data = {};
+        TrueWay.$dataMapAll = [];
         isReady = false;
         var promises = [];
         var _loop_1 = function (info) {
@@ -238,6 +239,9 @@
                 var child = _a[_i];
                 addMapTable(children, child);
             }
+            if (node.name in table) {
+                throw new TrueWayError("Duplicated map name ".concat(node.name, ". Modify name or disable the key feature to pass"));
+            }
             table[node.name] = {
                 id: node.id,
                 children: children
@@ -294,7 +298,18 @@
         });
     }
 
-    var _a = param.mapTable ? solveMapTable() : [null, null], mapTable = _a[0], inverseMapTable = _a[1];
+    var mapTable;
+    var inverseMapTable;
+    var _createGameObjects = mz.DataManager.createGameObjects;
+    mz.DataManager.createGameObjects = function () {
+        var _a;
+        _createGameObjects.call(this);
+        if (param.mapTable) {
+            _a = solveMapTable(), mapTable = _a[0], inverseMapTable = _a[1];
+            console.log(mapTable);
+            console.log(inverseMapTable);
+        }
+    };
     function parent(id) {
         var newId = mz.$dataMapInfos[id].parentId;
         if (newId === 0)
