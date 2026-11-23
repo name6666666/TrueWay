@@ -1,6 +1,6 @@
 import mz from 'rmmz'
-import {param, TrueWayError} from './true-way'
-
+import {genReg, param, TrueWayError} from './true-way'
+import escape from 'escape-string-regexp'
 
 
 interface MapAttr {
@@ -53,11 +53,29 @@ TrueWay.getMapCurrent = function() {
     return TrueWay.getMapById!(mz.$gameMap.mapId())
 }
 
-if (param.map) {
-    const _Game_Map_setup = mz.Game_Map.prototype.setup
-    mz.Game_Map.prototype.setup = function(mapId) {
-        _Game_Map_setup.call(this, mapId)
+
+let pattern: RegExp
+
+if (param.onEnter) {
+    const label = escape(String(param.onEnter))
+    pattern = genReg(label)
+}
+
+const _Game_Map_setup = mz.Game_Map.prototype.setup
+mz.Game_Map.prototype.setup = function(mapId) {
+    _Game_Map_setup.call(this, mapId)
+    const map = TrueWay.getMapCurrent!()
+    if (param.map) {
         // @ts-ignore
-        window[param.map] = TrueWay.getMapCurrent!()
+        window[param.map] = map
     }
+    if (param.onEnter) {
+        const match = mz.$dataMap.note.match(pattern)
+        if (match !== null) {
+            const script = match[1]
+            const func = new Function(script)
+            func()
+        }
+    }
+    map.entered = true
 }

@@ -26,3 +26,7 @@ window.TrueWay = {
 }
 
 export const param = mz.PluginManager.parameters('TrueWay')
+
+export function genReg(label: string): RegExp {
+    return new RegExp(String.raw`<${label}>(((?!(</${label}>))[\s\S])*?)</${label}>`)
+}
