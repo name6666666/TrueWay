@@ -31,3 +31,28 @@ export function getEventByMapIdAndEventId(mapId: number, eventId: number): Event
         }
     })
 }
+
+mz.PluginManager.registerCommand('TrueWay', 'initEvent', () => {})
+
+function initEvent(mapId: number, eventId: number, cmd: mz.DataCommand) {
+    console.log(cmd)
+}
+
+const _createGameObjects = mz.DataManager.createGameObjects
+mz.DataManager.createGameObjects = function() {
+    _createGameObjects.call(this)
+    const dataMapAll = TrueWay.$dataMapAll!
+    for (const i in dataMapAll) {
+        const map = dataMapAll[i]
+        for (const event of map.events) {
+            for (const page of event.pages) {
+                for (const cmd of page.list) {
+                    if (cmd.code !== 357) {
+                        continue
+                    }
+                    initEvent(Number(i), event.id, cmd)
+                }
+            }
+        }
+    }
+}

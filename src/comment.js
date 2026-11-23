@@ -56,11 +56,12 @@
  * @type text
  * @default init
  * 
- * @param initEvent
- * @text 初始化事件脚本标签
- * @desc 在游戏启动时为每个事件初始化属性的脚本的标签（应该在注释里写），为空报错
- * @type text
- * @default init
+ * @command initEvent
+ * @text 初始化事件脚本
+ * @desc 编写在游戏启动时为事件初始化属性的脚本，不受事件系统约束，一定会在游戏刚启动时执行
+ * @arg script
+ * @text 脚本
+ * @type multiline_string
  * 
  * @param mapTable
  * @text 地图名称建表
