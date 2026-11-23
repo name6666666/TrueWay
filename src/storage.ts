@@ -1,6 +1,5 @@
 import mz from 'rmmz'
-import { MapData, TrueWayData } from './true-way'
-import fs from 'fs'
+import { MapData, TrueWayData, TrueWayError } from './true-way'
 
 
 declare module 'rmmz' {
@@ -12,19 +11,21 @@ declare module 'rmmz' {
 const _createGameObjects = mz.DataManager.createGameObjects
 mz.DataManager.createGameObjects = function() {
     _createGameObjects.call(this)
-    let initialData: TrueWayData = {}
     for (const info of mz.$dataMapInfos) {
         if (!info) continue
         const path = `data/Map${String(info.id).padStart(3, '0')}.json`
-        const data: mz.DataMap = JSON.parse(fs.readFileSync(path, {encoding: 'utf-8'}))
-        const mapData: MapData = {mapVars: {}}
-        for (const e of data.events) {
-            if (!e) continue
-            mapData[e.id] = {}
-        }
-        initialData[info.id] = mapData
+        fetch(path).then(res => {
+            if (!res.ok) throw new TrueWayError(`When fetching ${path}: ${res.status} ${res.statusText}`)
+            return res.json()
+        }).then(data => {
+            const mapData: MapData = {mapVars: {}}
+            for (const e of data.events) {
+                if (!e) continue
+                mapData[e.id] = {}
+            }
+            TrueWay._data![info.id] = mapData
+        }).catch(e => {throw e})
     }
-    TrueWay._data = initialData
 }
 
 const _makeSaveContents = mz.DataManager.makeSaveContents

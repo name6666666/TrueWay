@@ -25,8 +25,10 @@
  * 设置属性
  * mapAttr.id
  * 内置属性————id，值为地图id
- * mapAttr.getParent
- * 内置属性————getParent，签名为(): MapAttr，获取父地图的属性管理器
+ * mapAttr.parent
+ * 内置属性————parent，值为父地图的属性管理器
+ * mapAttr.entered
+ * 内置属性————entered，值为是否进入过此地图
  * 
  * @url 6767
  * 
@@ -42,11 +44,11 @@
  * @type text
  * @default self
  * 
- * @param init
- * @text 初始化标签
- * @desc 设置初始化标签的名称，为空禁用
+ * @param onEnter
+ * @text 进入地图脚本标签
+ * @desc 进入地图时，在所有事件开始判定之间就执行的脚本的标签
  * @type text
- * @default init
+ * @default on-enter
  */
 (function (mz) {
     'use strict';
@@ -103,6 +105,10 @@
         Error: TrueWayError
     };
     var param = mz.PluginManager.parameters('TrueWay');
+    function genReg(label) {
+        return new RegExp(String.raw(templateObject_1 || (templateObject_1 = __makeTemplateObject(["<", ">(((?!(</", ">))[sS])*?)</", ">"], ["<", ">(((?!(</", ">))[\\s\\S])*?)</", ">"])), label, label, label));
+    }
+    var templateObject_1;
 
     var _createGameObjects = mz.DataManager.createGameObjects;
     mz.DataManager.createGameObjects = function () {
@@ -112,9 +118,22 @@
             var info = _a[_i];
             if (!info)
                 continue;
-            mz.DataManager.loadMapData(info.id);
-            var a = mz.$dataMap.note;
-            console.log(a);
+            var path = "data/Map".concat(String(info.id).padStart(3, '0'), ".json");
+            var data = fetch(path).then(function (res) {
+                if (!res.ok)
+                    throw new Error("".concat(res.status, ": ").concat(res.statusText));
+                return res.json();
+            }).then(function (data) {
+                console.log(data);
+            }).catch(function (e) { throw e; });
+            var mapData = { mapVars: {} };
+            for (var _b = 0, _c = data.events; _b < _c.length; _b++) {
+                var e = _c[_b];
+                if (!e)
+                    continue;
+                mapData[e.id] = {};
+            }
+            initialData[info.id] = mapData;
         }
         TrueWay._data = initialData;
     };
@@ -130,47 +149,6 @@
         TrueWay._data = contents.name6666666_TrueWay;
     };
 
-    TrueWay.getMapById = function (id) {
-        if (!(id in TrueWay._data))
-            return null;
-        return new Proxy({
-            id: id,
-            getParent: function () {
-                var newId = mz.$dataMapInfos[id].parentId;
-                return TrueWay.getMapById(newId);
-            }
-        }, {
-            get: function (target, p, receiver) {
-                var ret = Reflect.get(TrueWay._data[target.id].mapVars, p);
-                if (ret === undefined) {
-                    if (p in target) {
-                        return Reflect.get(target, p, receiver);
-                    }
-                    throw new TrueWayError("Unknown attribute ".concat(String(p), ", when access map ").concat(target.id));
-                }
-                return ret;
-            },
-            set: function (target, p, newValue) {
-                if (newValue === undefined) {
-                    throw new TrueWayError("Can not assign attribute ".concat(String(p), " as undefined, when access map ").concat(target.id));
-                }
-                var scope = TrueWay._data[target.id].mapVars;
-                return Reflect.set(scope, p, newValue);
-            }
-        });
-    };
-    TrueWay.getMapCurrent = function () {
-        return TrueWay.getMapById(mz.$gameMap.mapId());
-    };
-    if (param.map) {
-        var _Game_Map_setup_1 = mz.Game_Map.prototype.setup;
-        mz.Game_Map.prototype.setup = function (mapId) {
-            _Game_Map_setup_1.call(this, mapId);
-            // @ts-ignore
-            window[param.map] = TrueWay.getMapCurrent();
-        };
-    }
-
     function escapeStringRegexp(string) {
     	if (typeof string !== 'string') {
     		throw new TypeError('Expected a string');
@@ -183,31 +161,87 @@
     		.replace(/-/g, '\\x2d');
     }
 
+    function getEventByMapIdAndEventId(mapId, eventId) {
+        // @ts-ignore
+        return new Proxy({}, {
+            get: function (target, p, receiver) {
+                var ret = Reflect.get(TrueWay._data[mapId][eventId], p);
+                if (ret === undefined) {
+                    switch (p) {
+                        case 'map': TrueWay.getMapById(mapId);
+                    }
+                    throw new TrueWayError("Unknown attribute ".concat(String(p), ", when access map ").concat(mapId, " event ").concat(eventId));
+                }
+                return ret;
+            },
+            set: function (target, p, newValue) {
+                if (newValue === undefined) {
+                    throw new TrueWayError("Can not assign attribute ".concat(String(p), " as undefined, when access map ").concat(mapId, " event ").concat(eventId));
+                }
+                return Reflect.set(TrueWay._data[mapId][eventId], p, newValue);
+            }
+        });
+    }
+
+    function parent(id) {
+        var newId = mz.$dataMapInfos[id].parentId;
+        if (newId === 0)
+            throw new TrueWayError("Map ".concat(id, " has no parent"));
+        return TrueWay.getMapById(newId);
+    }
+    // @ts-ignore
+    TrueWay.getMapById = function (id) {
+        if (!(id in TrueWay._data))
+            throw new TrueWayError("Unknown map id ".concat(id));
+        return new Proxy({}, {
+            get: function (target, p, receiver) {
+                var ret = Reflect.get(TrueWay._data[id].mapVars, p);
+                if (ret === undefined) {
+                    switch (p) {
+                        case 'id': return id;
+                        case 'parent': return parent(id);
+                        case 'entered': return false;
+                        case 'getEventById': return function (eventId) {
+                            return getEventByMapIdAndEventId(id, eventId);
+                        };
+                    }
+                    throw new TrueWayError("Unknown attribute ".concat(String(p), ", when access map ").concat(id));
+                }
+                return ret;
+            },
+            set: function (target, p, newValue) {
+                if (newValue === undefined) {
+                    throw new TrueWayError("Can not assign attribute ".concat(String(p), " as undefined, when access map ").concat(id));
+                }
+                return Reflect.set(TrueWay._data[id].mapVars, p, newValue);
+            }
+        });
+    };
+    TrueWay.getMapCurrent = function () {
+        return TrueWay.getMapById(mz.$gameMap.mapId());
+    };
     var pattern;
-    if (param.init) {
-        var label = escapeStringRegexp(String(param.init));
-        pattern = new RegExp(String.raw(templateObject_1 || (templateObject_1 = __makeTemplateObject(["<", ">(((?!(</", ">))[sS])*?)</", ">"], ["<", ">(((?!(</", ">))[\\s\\S])*?)</", ">"])), label, label, label));
+    if (param.onEnter) {
+        var label = escapeStringRegexp(String(param.onEnter));
+        pattern = genReg(label);
     }
     var _Game_Map_setup = mz.Game_Map.prototype.setup;
     mz.Game_Map.prototype.setup = function (mapId) {
         _Game_Map_setup.call(this, mapId);
-        if (TrueWay._data[mapId] === undefined) {
-            var mapContent = { mapVars: {} };
-            for (var _i = 0, _a = mz.$gameMap.events(); _i < _a.length; _i++) {
-                var e = _a[_i];
-                mapContent[e.eventId()] = {};
-            }
-            TrueWay._data[mapId] = mapContent;
-            if (param.init) {
-                var match = mz.$dataMap.note.match(pattern);
-                if (match !== null) {
-                    var script = match[1];
-                    var func = new Function(script);
-                    func();
-                }
+        var map = TrueWay.getMapCurrent();
+        if (param.map) {
+            // @ts-ignore
+            window[param.map] = map;
+        }
+        if (param.onEnter) {
+            var match = mz.$dataMap.note.match(pattern);
+            if (match !== null) {
+                var script = match[1];
+                var func = new Function(script);
+                func();
             }
         }
+        map.entered = true;
     };
-    var templateObject_1;
 
 })(window);
