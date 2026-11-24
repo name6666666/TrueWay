@@ -89,13 +89,7 @@ mz.DataManager.createGameObjects = function() {
     }
 }
 
-declare module './true-way' {
-    interface TrueWayType {
-        getEventCurrent: {(): EventAttr}
-    }
-}
-
-TrueWay.getEventCurrent = function() {
+function getEventCurrent() {
     const mapId = mz.$gameMap.mapId()
     const eventId = mz.$gameMap._interpreter.eventId()
     return getEventByMapIdAndEventId(mapId, eventId)
@@ -104,11 +98,11 @@ TrueWay.getEventCurrent = function() {
 // @ts-ignore
 window[param.self] = new Proxy({}, {
     get: function(target, p, receiver) {
-        const eventAttr = TrueWay.getEventCurrent!()
+        const eventAttr = getEventCurrent!()
         return Reflect.get(eventAttr, p)
     },
     set: function(target, p, newValue) {
-        const eventAttr = TrueWay.getEventCurrent!()
+        const eventAttr = getEventCurrent!()
         return Reflect.set(eventAttr, p, newValue)
     }
 })

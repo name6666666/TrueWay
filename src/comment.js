@@ -17,14 +17,14 @@
  * TrueWay.getMapById(id: number): MapAttr
  * 用地图id获取地图的属性管理器
  * 
- * TrueWay.getMapCurrent(): MapAttr
- * 获取当前地图的属性管理器
- * 
  * TrueWay.getTopMap(name: string): MapAttr
  * 用名称获取顶层地图的属性管理器
  * 
- * TrueWay.getEventCurrent(): EventAttr
- * 获取当前事件的属性管理器
+ * window.map: MapAttr
+ * 全局变量map永远是当前地图的属性管理器
+ * 
+ * window.self: EventAttr
+ * 全局变量self永远是当前事件的属性管理器
  * 
  * 对于一个地图的属性管理器mapAttr
  * mapAttr.foo

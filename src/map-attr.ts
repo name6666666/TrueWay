@@ -57,7 +57,6 @@ declare module './true-way' {
     interface TrueWayType {
         getMapById: {(id: number): MapAttr}
         getTopMap: {(name: string): MapAttr}
-        getMapCurrent: {(): MapAttr}
     }
 }
 
@@ -135,7 +134,7 @@ TrueWay.getTopMap = function(name) {
     return TrueWay.getMapById!(mapTable[name].id)
 }
 
-TrueWay.getMapCurrent = function() {
+function getMapCurrent() {
     return TrueWay.getMapById!(mz.$gameMap.mapId())
 }
 
@@ -145,7 +144,7 @@ const _Game_Map_setup = mz.Game_Map.prototype.setup
 mz.Game_Map.prototype.setup = function(mapId) {
     _Game_Map_setup.call(this, mapId)
 
-    const map = TrueWay.getMapCurrent!()
+    const map = getMapCurrent!()
     // @ts-ignore
     window[param.map] = map
 
