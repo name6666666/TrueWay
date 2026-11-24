@@ -30,6 +30,7 @@ export interface Param {
     self: string
     onEnter: string
     initMap: string
+    js: string
     mapTable: boolean
     eventTable: boolean
     global: string | null
@@ -43,7 +44,7 @@ export const param: Param = originalParam
 
 const identifierRegex = /^[\p{ID_Start}\p{ID_Continue}]*$/u
 for (const ident of [
-    param.map, param.self, param.onEnter, param.initMap
+    param.map, param.self, param.onEnter, param.initMap, param.js
 ]) {
     const match = ident.match(identifierRegex)
     if (match === null) {

@@ -120,6 +120,12 @@
  * @type text
  * @default init
  * 
+ * @param js
+ * @text 文本插值标签
+ * @desc 为文本插入任意js表达式的标签
+ * @type text
+ * @default js
+ * 
  * @command initEvent
  * @text 初始化事件脚本
  * @desc 编写在游戏启动时为事件初始化属性的脚本，不受事件系统约束，一定会在游戏刚启动时执行
