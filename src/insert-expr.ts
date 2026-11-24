@@ -7,9 +7,8 @@ const mark = `\x1b${param.js}[`
 const begin = '['
 const end = ']'
 
-const pattern = /(\x1b|\\)/g
 function mzToNormal(text: string): string {
-    return text.replace(pattern, (match, g1) => {
+    return text.replace(mzToNormal.pattern, (match, g1) => {
         switch (g1) {
             case '\x1b': return '\\'
             case '\\': return '\\\\'
@@ -17,10 +16,17 @@ function mzToNormal(text: string): string {
         }
     })
 }
+mzToNormal.pattern = /(\x1b|\\)/g
+
+function normalToMz(text: string): string {
+    return text.replace(normalToMz.p1, "\x1b").replace(normalToMz.p2, "\\")
+}
+normalToMz.p1 = /\\/g
+normalToMz.p2 = /\x1b\x1b/g
 
 function solveText(text: string): [string, string] {
     const noMark = text.substring(mark.length)
-    const tokens = jsTokens(noMark)
+    const tokens = jsTokens(mzToNormal(noMark))
     const tokenArr: Token[] = []
     for (const token of tokens) tokenArr.push(token)
     let script = ''
@@ -35,7 +41,7 @@ function solveText(text: string): [string, string] {
                     for (let j = Number(i) + 1; j < tokenArr.length; j++) {
                         remain += tokenArr[j].value
                     }
-                    return [String(window.eval(script)), remain.substring(end.length)]
+                    return [String(window.eval(script)), normalToMz(remain)]
                 }
                 else script += token.value
             } else {
@@ -43,7 +49,7 @@ function solveText(text: string): [string, string] {
                 script += token.value
             }
         } else {
-            script += mzToNormal(token.value)
+            script += token.value
         }
     }
     throw new TrueWayError(`Boarderless inserted expression:\n ${mzToNormal(text)}`)
