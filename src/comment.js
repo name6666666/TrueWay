@@ -91,7 +91,7 @@
  * 
  * 在事件执行到它时，实际上只会执行一个空函数，它只用于在游戏启动阶段执行
  * 
- * @url 6767
+ * @url https://github.com/name6666666/TrueWay
  * 
  * @param map
  * @text 对应当前地图的全局变量
