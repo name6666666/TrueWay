@@ -3,20 +3,27 @@ import { param, TrueWayError } from './true-way'
 import { MapAttr } from './map-attr'
 
 
-export interface EventAttr {
+export interface EventAttr extends EventAttrBase {
     [attr: string]: any
-    map: MapAttr
+}
+
+class EventAttrBase {
+    #mapId: number
+    constructor(mapId: number) {
+        this.#mapId = mapId
+    }
+    get map(): MapAttr {
+        return TrueWay.getMapById!(this.#mapId)
+    }
 }
 
 export function getEventByMapIdAndEventId(mapId: number, eventId: number): EventAttr {
-    // @ts-ignore
-    return new Proxy({}, {
+    return new Proxy(new EventAttrBase(mapId), {
         get: function(target, p, receiver) {
             const ret = Reflect.get(TrueWay._data![mapId][eventId], p)
             if (ret === undefined) {
-                switch (p) {
-                    case 'id': return eventId
-                    case 'map': return TrueWay.getMapById!(mapId)
+                if (p in target) {
+                    return Reflect.get(target, p, receiver)
                 }
                 throw new TrueWayError(`Unknown attribute ${String(p)}, when access map ${mapId} event ${eventId}`)
             }
@@ -83,5 +90,4 @@ mz.Game_Map.prototype.setup = function(mapId) {
     const self = TrueWay.getEventCurrent!()
     // @ts-ignore
     window[param.self] = self
-
 }

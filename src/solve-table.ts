@@ -55,7 +55,7 @@ export function solveMapTable(): [MapTable, InverseMapTable] {
             addMapTable(children, child)
         }
         if (node.name in table) {
-            throw new TrueWayError(`Duplicated map name ${node.name}. Modify name or disable the key feature to pass`)
+            throw new TrueWayError(`Duplicated map name ${JSON.stringify(node.name)}. Modify name or disable the key feature to pass`)
         }
         table[node.name] = {
             id: node.id,
@@ -88,8 +88,9 @@ export function solveEventTable(): EventTable {
         const events: {[name: string]: number} = {}
         for (const e of map.events) {
             if (!e) continue
+            console.log(e.name)
             if (e.name in events) {
-                throw new TrueWayError(`Duplicated event name ${e.name}. Modify name or disable the key feature to pass`)
+                throw new TrueWayError(`Duplicated event name ${JSON.stringify(e.name)}. Modify name or disable the key feature to pass`)
             }
             events[e.name] = e.id
         }

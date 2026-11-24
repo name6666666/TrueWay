@@ -6,14 +6,50 @@ import './storage'
 import { solveEventTable, solveMapTable } from './solve-table'
 
 
-export interface MapAttr {
+export interface MapAttr extends MapAttrBase {
     [attr: string]: any
+}
+
+class MapAttrBase {
     id: number
-    parent: MapAttr
-    entered: boolean
-    getEventById: {(id: number): EventAttr}
-    getMapByName: {(name: string): MapAttr}
-    getEventByName: {(name: string): EventAttr}
+    entered: boolean = false
+    constructor(id: number) {
+        this.id = id
+    }
+    getEventById(eventId: number): EventAttr {
+        return getEventByMapIdAndEventId(this.id, eventId)
+    }
+    getMapByName(name: string): MapAttr {
+        if (inverseMapTable === null || mapTable === null) {
+            throw new TrueWayError(
+                `${this.getMapByName.name} unavailable. Particular configuration required`
+            )
+        }
+        const path = [...inverseMapTable[this.id], name]
+        let target = mapTable[path[0]]
+        for (const i in path) {
+            if (i === '0') continue
+            const part = path[i]
+            target = target.children[part]
+        }
+        if (!(this.id in TrueWay._data!)) throw new TrueWayError(`Unknown map name ${name}`)
+        return TrueWay.getMapById!(target.id)
+    }
+    getEventByName(name: string): EventAttr {
+        if (eventTable === null) {
+            throw new TrueWayError(
+                `${this.getEventByName.name} unavailable. Particular configuration required`
+            )
+        }
+        const events = eventTable[this.id]
+        const eventId = events[name]
+        return getEventByMapIdAndEventId(this.id, eventId)
+    }
+    get parent(): MapAttr {
+        const newId = mz.$dataMapInfos[this.id].parentId
+        if (newId === 0) throw new TrueWayError(`Map ${this.id} has no parent`)
+        return TrueWay.getMapById!(newId)
+    }
 }
 
 declare module './true-way' {
@@ -70,52 +106,14 @@ function initAttr() {
     }
 }
 
-function parent(id: number): MapAttr {
-    const newId = mz.$dataMapInfos[id].parentId
-    if (newId === 0) throw new TrueWayError(`Map ${id} has no parent`)
-    return TrueWay.getMapById!(newId)
-}
-
-// @ts-ignore
 TrueWay.getMapById = function(id) {
     if (!(id in TrueWay._data!)) throw new TrueWayError(`Unknown map id ${id}`)
-    return new Proxy({}, {
+    return new Proxy(new MapAttrBase(id), {
         get: function(target, p, receiver) {
             const ret = Reflect.get(TrueWay._data![id].mapVars, p)
             if (ret === undefined) {
-                switch (p) {
-                    case 'id': return id
-                    case 'parent': return parent(id)
-                    case 'entered': return false
-                    case 'getEventById': return function(eventId: number): EventAttr {
-                        return getEventByMapIdAndEventId(id, eventId)
-                    }
-                    case 'getMapByName': return function(name: string): MapAttr {
-                        if (inverseMapTable === null || mapTable === null) {
-                            throw new TrueWayError(
-                                `${TrueWay.getMapByName!.name} unavailable. Particular configuration required`
-                            )
-                        }
-                        const path = [...inverseMapTable[id], name]
-                        let target = mapTable[path[0]]
-                        for (const i in path) {
-                            if (i === '0') continue
-                            const part = path[i]
-                            target = target.children[part]
-                        }
-                        if (!(id in TrueWay._data!)) throw new TrueWayError(`Unknown map name ${name}`)
-                        return TrueWay.getMapById!(target.id)
-                    }
-                    case 'getEventByName': return function(name: string): EventAttr {
-                        if (eventTable === null) {
-                            throw new TrueWayError(
-                                `getEventByName unavailable. Particular configuration required`
-                            )
-                        }
-                        const events = eventTable[id]
-                        const eventId = events[name]
-                        return getEventByMapIdAndEventId(id, eventId)
-                    }
+                if (p in target) {
+                    return Reflect.get(target, p, receiver)
                 }
                 throw new TrueWayError(`Unknown attribute ${String(p)}, when access map ${id}`)
             }

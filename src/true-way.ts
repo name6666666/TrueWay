@@ -46,7 +46,7 @@ for (const ident of [
 ]) {
     const match = ident.match(identifierRegex)
     if (match === null) {
-        throw new TrueWayError(`Invailid identifier ${ident}`)
+        throw new TrueWayError(`Invailid identifier ${JSON.stringify(ident)}`)
     }
 }
 
