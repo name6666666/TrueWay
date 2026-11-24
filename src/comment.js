@@ -129,6 +129,7 @@
  * @text 文本插值标签
  * @desc 为文本插入任意js表达式的标签
  * @type struct<InsertedExpression>
+ * @default {"label":"js","parentheses":"[]"}
  * 
  * @command initEvent
  * @text 初始化事件脚本

@@ -129,6 +129,7 @@
  * @text 文本插值标签
  * @desc 为文本插入任意js表达式的标签
  * @type struct<InsertedExpression>
+ * @default {"label":"js","parentheses":"[]"}
  * 
  * @command initEvent
  * @text 初始化事件脚本
@@ -192,6 +193,7 @@
     const originalParam = mz.PluginManager.parameters('TrueWay');
     originalParam.mapTable = originalParam.mapTable === 'true' ? true : false;
     originalParam.eventTable = originalParam.eventTable === 'true' ? true : false;
+    originalParam.js = JSON.parse(originalParam.js);
     // @ts-ignore
     const param = originalParam;
     const identifierRegex = /^[\p{ID_Start}\p{ID_Continue}]*$/u;
@@ -212,7 +214,7 @@
     else {
         param.global = null;
     }
-    if (!(param.js.parentheses in ['[]', '()', '{}'])) {
+    if (!['[]', '()', '{}'].includes(param.js.parentheses)) {
         throw new TrueWayError(`Invailid parentheses ${param.js.parentheses}`);
     }
     function genReg(label) {

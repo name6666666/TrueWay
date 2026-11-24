@@ -48,6 +48,7 @@ export interface Param {
 const originalParam = mz.PluginManager.parameters('TrueWay')
 originalParam.mapTable = originalParam.mapTable === 'true' ? true : false
 originalParam.eventTable = originalParam.eventTable === 'true' ? true : false
+originalParam.js = JSON.parse(originalParam.js as string)
 // @ts-ignore
 export const param: Param = originalParam
 
@@ -70,7 +71,7 @@ if (param.global) {
     param.global = null
 }
 
-if (!(param.js.parentheses in ['[]', '()', '{}'])) {
+if (!['[]', '()', '{}'].includes(param.js.parentheses)) {
     throw new TrueWayError(`Invailid parentheses ${param.js.parentheses}`)
 }
 
