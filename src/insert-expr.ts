@@ -6,6 +6,10 @@ import jsTokens from 'js-tokens'
 const begin = `\x1b${param.js}[`
 const end = ']'
 
+function mzToNormal(text: string): string {
+    return text.replace(/\x1b/g, '\\').replace(/\\/g, '\\\\')
+}
+
 function solveText(text: string): [string, string] {
     const noMark = text.substring(begin.length)
     const tokens = jsTokens(noMark)
@@ -22,10 +26,10 @@ function solveText(text: string): [string, string] {
                 script += token.value
             }
         } else {
-            script += token.value.replace('\x1b', '\\').replace('\\', '\\\\')
+            script += mzToNormal(token.value)
         }
     }
-    throw new TrueWayError(`Boarderless inserted expression:\n ${text.replace('\x1b', '\\').replace('\\', '\\\\')}`)
+    throw new TrueWayError(`Boarderless inserted expression:\n ${mzToNormal(text)}`)
 }
 
 function computeInsert(text: string) {
