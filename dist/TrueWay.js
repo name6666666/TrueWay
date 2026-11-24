@@ -17,14 +17,17 @@
  * TrueWay.getMapById(id: number): MapAttr
  * 用地图id获取地图的属性管理器
  * 
- * TrueWay.getMapCurrent(): MapAttr
- * 获取当前地图的属性管理器
- * 
  * TrueWay.getTopMap(name: string): MapAttr
  * 用名称获取顶层地图的属性管理器
  * 
- * TrueWay.getEventCurrent(): EventAttr
- * 获取当前事件的属性管理器
+ * window.map: MapAttr
+ * 全局变量map永远是当前地图的属性管理器
+ * 
+ * window.self: EventAttr
+ * 全局变量self永远是当前事件的属性管理器
+ * 
+ * window.global: Global
+ * 全局变量global是游戏全局变量管理器，以更方便的接口完成$gameVariables的功能
  * 
  * 对于一个地图的属性管理器mapAttr
  * mapAttr.foo
@@ -53,6 +56,12 @@
  * 内置属性，值为事件id
  * eventAttr.map
  * 内置属性，值为所属地图的属性管理器
+ * 
+ * 对于global
+ * global.foo
+ * 按名称读取变量
+ * global.foo = 67
+ * 按名称设置变量
  * 
  * 地图标签：
  * 
@@ -91,6 +100,13 @@
  * @desc 设置一个全局变量，它总是当前事件的属性管理器
  * @type text
  * @default self
+ * 
+ * @param global
+ * @text 游戏变量管理器的全局变量
+ * @desc 设置一个全局变量，用来更方便地管理游戏变量，会为游戏变量名称建表，
+ * 代价是无法创建同名变量，为空可禁用
+ * @type text
+ * @default global
  * 
  * @param onEnter
  * @text 进入地图脚本标签
@@ -150,6 +166,15 @@
         if (match === null) {
             throw new TrueWayError(`Invailid identifier ${JSON.stringify(ident)}`);
         }
+    }
+    if (param.global) {
+        const match = param.global.match(identifierRegex);
+        if (match === null) {
+            throw new TrueWayError(`Invailid identifier ${JSON.stringify(param.global)}`);
+        }
+    }
+    else {
+        param.global = null;
     }
     function genReg(label) {
         return new RegExp(String.raw `<${label}>(((?!(</${label}>))[\s\S])*?)</${label}>`, 'g');
@@ -580,9 +605,9 @@
     var browserExports = requireBrowser();
     var fetchSync = /*@__PURE__*/getDefaultExportFromCjs(browserExports);
 
-    const _createGameObjects$2 = mz.DataManager.createGameObjects;
+    const _createGameObjects$3 = mz.DataManager.createGameObjects;
     mz.DataManager.createGameObjects = function () {
-        _createGameObjects$2.call(this);
+        _createGameObjects$3.call(this);
         TrueWay._data = {};
         TrueWay.$dataMapAll = [];
         for (const info of mz.$dataMapInfos) {
@@ -688,7 +713,6 @@
             for (const e of map.events) {
                 if (!e)
                     continue;
-                console.log(e.name);
                 if (e.name in events) {
                     throw new TrueWayError(`Duplicated event name ${JSON.stringify(e.name)}. Modify name or disable the key feature to pass`);
                 }
@@ -748,12 +772,24 @@
 
     var _EventAttrBase_mapId;
     class EventAttrBase {
-        constructor(mapId) {
+        constructor(mapId, eventId) {
             _EventAttrBase_mapId.set(this, void 0);
             __classPrivateFieldSet(this, _EventAttrBase_mapId, mapId, "f");
+            this.id = eventId;
         }
         get map() {
             return TrueWay.getMapById(__classPrivateFieldGet(this, _EventAttrBase_mapId, "f"));
+        }
+        findEvent(x, y) {
+            const dataMapAll = TrueWay.$dataMapAll;
+            const events = dataMapAll[__classPrivateFieldGet(this, _EventAttrBase_mapId, "f")].events;
+            const [selfX, selfY] = [events[this.id].x, events[this.id].y];
+            const target = events.find((v, _i, _o) => {
+                return (v.x === (selfX + x)) && (v.y === (selfY + y));
+            });
+            if (target === undefined)
+                throw new TrueWayError(`Map ${__classPrivateFieldGet(this, _EventAttrBase_mapId, "f")} event ${this.id} can not find (${x}, ${y})`);
+            return getEventByMapIdAndEventId(__classPrivateFieldGet(this, _EventAttrBase_mapId, "f"), target.id);
         }
     }
     _EventAttrBase_mapId = new WeakMap();
@@ -761,7 +797,7 @@
         if (TrueWay._data?.[mapId]?.[eventId] === undefined) {
             throw new TrueWayError(`Map ${mapId} event ${eventId} dose not exist`);
         }
-        return new Proxy(new EventAttrBase(mapId), {
+        return new Proxy(new EventAttrBase(mapId, eventId), {
             get: function (target, p, receiver) {
                 const ret = Reflect.get(TrueWay._data[mapId][eventId], p);
                 if (ret === undefined) {
@@ -790,9 +826,9 @@
             func(self);
         }
     }
-    const _createGameObjects$1 = mz.DataManager.createGameObjects;
+    const _createGameObjects$2 = mz.DataManager.createGameObjects;
     mz.DataManager.createGameObjects = function () {
-        _createGameObjects$1.call(this);
+        _createGameObjects$2.call(this);
         const dataMapAll = TrueWay.$dataMapAll;
         for (const i in dataMapAll) {
             const map = dataMapAll[i];
@@ -810,19 +846,19 @@
             }
         }
     };
-    TrueWay.getEventCurrent = function () {
+    function getEventCurrent() {
         const mapId = mz.$gameMap.mapId();
         const eventId = mz.$gameMap._interpreter.eventId();
         return getEventByMapIdAndEventId(mapId, eventId);
-    };
+    }
     // @ts-ignore
     window[param.self] = new Proxy({}, {
         get: function (target, p, receiver) {
-            const eventAttr = TrueWay.getEventCurrent();
+            const eventAttr = getEventCurrent();
             return Reflect.get(eventAttr, p);
         },
         set: function (target, p, newValue) {
-            const eventAttr = TrueWay.getEventCurrent();
+            const eventAttr = getEventCurrent();
             return Reflect.set(eventAttr, p, newValue);
         }
     });
@@ -871,9 +907,9 @@
     let mapTable;
     let inverseMapTable;
     let eventTable;
-    const _createGameObjects = mz.DataManager.createGameObjects;
+    const _createGameObjects$1 = mz.DataManager.createGameObjects;
     mz.DataManager.createGameObjects = function () {
-        _createGameObjects.call(this);
+        _createGameObjects$1.call(this);
         let [a, b] = param.mapTable ? solveMapTable() : [null, null];
         mapTable = a;
         inverseMapTable = b;
@@ -924,14 +960,14 @@
             throw new TrueWayError(`Map ${name} is not a top map. Can not use ${TrueWay.getTopMap.name}`);
         return TrueWay.getMapById(mapTable[name].id);
     };
-    TrueWay.getMapCurrent = function () {
+    function getMapCurrent() {
         return TrueWay.getMapById(mz.$gameMap.mapId());
-    };
+    }
     const onEnterPattern = genReg(escapeStringRegexp(param.onEnter));
     const _Game_Map_setup = mz.Game_Map.prototype.setup;
     mz.Game_Map.prototype.setup = function (mapId) {
         _Game_Map_setup.call(this, mapId);
-        const map = TrueWay.getMapCurrent();
+        const map = getMapCurrent();
         // @ts-ignore
         window[param.map] = map;
         const matches = mz.$dataMap.note.matchAll(onEnterPattern);
@@ -941,6 +977,48 @@
             func();
         }
         map.entered = true;
+    };
+
+    function createTable() {
+        const table = {};
+        for (const i in mz.$dataSystem.variables) {
+            const v = mz.$dataSystem.variables[i];
+            if (!v)
+                continue;
+            if (v in table) {
+                throw new TrueWayError(`Duplicated global variable name ${v}. Modify name or disable the key feature to pass`);
+            }
+            table[v] = Number(i);
+        }
+        return table;
+    }
+    let table;
+    const _createGameObjects = mz.DataManager.createGameObjects;
+    mz.DataManager.createGameObjects = function () {
+        _createGameObjects.call(this);
+        table = createTable();
+    };
+    if (param.global !== null) {
+        // @ts-ignore
+        window[param.global] = new Proxy({}, {
+            get: function (target, p, receiver) {
+                return mz.$gameVariables.value(table[p]);
+            },
+            set: function (target, p, newValue) {
+                mz.$gameVariables.setValue(table[p], newValue);
+                return true;
+            }
+        });
+    }
+
+    const pattern = /\x1bJS\[([\S\s]*)\]/g;
+    const _Window_Base_convertEscapeCharacters = mz.Window_Base.prototype.convertEscapeCharacters;
+    mz.Window_Base.prototype.convertEscapeCharacters = function (text) {
+        text = _Window_Base_convertEscapeCharacters.call(this, text);
+        const newText = text.replace(pattern, (match, g1) => {
+            return String(eval(g1));
+        });
+        return newText;
     };
 
 })(window);
