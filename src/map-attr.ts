@@ -32,7 +32,7 @@ class MapAttrBase {
             const part = path[i]
             target = target.children[part]
         }
-        if (!(this.id in TrueWay._data!)) throw new TrueWayError(`Unknown map name ${name}`)
+        if (!target) throw new TrueWayError(`Unknown map name ${name}`)
         return TrueWay.getMapById!(target.id)
     }
     getEvent(name: string): EventAttr {
@@ -42,6 +42,7 @@ class MapAttrBase {
             )
         }
         const events = eventTable[this.id]
+        if (!(name in events)) throw new TrueWayError(`Unknown event name ${name}`)
         const eventId = events[name]
         return getEventByMapIdAndEventId(this.id, eventId)
     }
