@@ -18,6 +18,9 @@ class EventAttrBase {
 }
 
 export function getEventByMapIdAndEventId(mapId: number, eventId: number): EventAttr {
+    if (TrueWay._data!?.[mapId]?.[eventId] === undefined) {
+        throw new TrueWayError(`Map ${mapId} event ${eventId} dose not exist`)
+    }
     return new Proxy(new EventAttrBase(mapId), {
         get: function(target, p, receiver) {
             const ret = Reflect.get(TrueWay._data![mapId][eventId], p)
@@ -84,10 +87,14 @@ TrueWay.getEventCurrent = function() {
     return getEventByMapIdAndEventId(mapId, eventId)
 }
 
-const _Game_Map_setup = mz.Game_Map.prototype.setup
-mz.Game_Map.prototype.setup = function(mapId) {
-    _Game_Map_setup.call(this, mapId)
-    const self = TrueWay.getEventCurrent!()
-    // @ts-ignore
-    window[param.self] = self
-}
+// @ts-ignore
+window[param.self] = new Proxy({}, {
+    get: function(target, p, receiver) {
+        const eventAttr = TrueWay.getEventCurrent!()
+        return Reflect.get(eventAttr, p)
+    },
+    set: function(target, p, newValue) {
+        const eventAttr = TrueWay.getEventCurrent!()
+        return Reflect.set(eventAttr, p, newValue)
+    }
+})
