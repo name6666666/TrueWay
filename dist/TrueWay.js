@@ -78,6 +78,10 @@
  * </init>
  * init会在游戏启动时被调用，且会注入此地图属性管理器变量
  * 
+ * 文本标签：
+ * “获得了药水\js[self.potion]瓶”
+ * 用\js插入任意表达式
+ * 
  * 插件指令：
  * 
  * 初始化事件脚本指令的示例如下
@@ -120,6 +124,12 @@
  * @type text
  * @default init
  * 
+ * @param js
+ * @text 文本插值标签
+ * @desc 为文本插入任意js表达式的标签
+ * @type text
+ * @default js
+ * 
  * @command initEvent
  * @text 初始化事件脚本
  * @desc 编写在游戏启动时为事件初始化属性的脚本，不受事件系统约束，一定会在游戏刚启动时执行
@@ -160,7 +170,7 @@
     const param = originalParam;
     const identifierRegex = /^[\p{ID_Start}\p{ID_Continue}]*$/u;
     for (const ident of [
-        param.map, param.self, param.onEnter, param.initMap
+        param.map, param.self, param.onEnter, param.initMap, param.js
     ]) {
         const match = ident.match(identifierRegex);
         if (match === null) {
@@ -1011,12 +1021,12 @@
         });
     }
 
-    const pattern = /\x1bJS\[([\S\s]*)\]/g;
+    const pattern = new RegExp(String.raw `\x1b${escapeStringRegexp(param.js)}\[([\S\s]*)\]`, 'g');
     const _Window_Base_convertEscapeCharacters = mz.Window_Base.prototype.convertEscapeCharacters;
     mz.Window_Base.prototype.convertEscapeCharacters = function (text) {
         text = _Window_Base_convertEscapeCharacters.call(this, text);
         const newText = text.replace(pattern, (match, g1) => {
-            return String(eval(g1));
+            return String(window.eval(g1));
         });
         return newText;
     };
