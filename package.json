@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "escape-string-regexp": "^5.0.0",
+    "js-tokens": "^10.0.1",
     "rmmz": "npm:rmmz-types@1.5.0-3",
     "sync-fetch": "^0.7.1"
   }
