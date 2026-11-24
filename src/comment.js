@@ -26,6 +26,9 @@
  * window.self: EventAttr
  * 全局变量self永远是当前事件的属性管理器
  * 
+ * window.global: Global
+ * 全局变量global是游戏全局变量管理器，以更方便的接口完成$gameVariables的功能
+ * 
  * 对于一个地图的属性管理器mapAttr
  * mapAttr.foo
  * 获取属性
@@ -53,6 +56,12 @@
  * 内置属性，值为事件id
  * eventAttr.map
  * 内置属性，值为所属地图的属性管理器
+ * 
+ * 对于global
+ * global.foo
+ * 按名称读取变量
+ * global.foo = 67
+ * 按名称设置变量
  * 
  * 地图标签：
  * 
@@ -91,6 +100,13 @@
  * @desc 设置一个全局变量，它总是当前事件的属性管理器
  * @type text
  * @default self
+ * 
+ * @param global
+ * @text 游戏变量管理器的全局变量
+ * @desc 设置一个全局变量，用来更方便地管理游戏变量，会为游戏变量名称建表，
+ * 代价是无法创建同名变量，为空可禁用
+ * @type text
+ * @default global
  * 
  * @param onEnter
  * @text 进入地图脚本标签

@@ -32,6 +32,7 @@ export interface Param {
     initMap: string
     mapTable: boolean
     eventTable: boolean
+    global: string | null
 }
 
 const originalParam = mz.PluginManager.parameters('TrueWay')
@@ -48,6 +49,15 @@ for (const ident of [
     if (match === null) {
         throw new TrueWayError(`Invailid identifier ${JSON.stringify(ident)}`)
     }
+}
+
+if (param.global) {
+    const match = param.global.match(identifierRegex)
+    if (match === null) {
+        throw new TrueWayError(`Invailid identifier ${JSON.stringify(param.global)}`)
+    }
+} else {
+    param.global = null
 }
 
 export function genReg(label: string): RegExp {
