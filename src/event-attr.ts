@@ -31,6 +31,14 @@ class EventAttrBase {
     }
 }
 
+declare module './true-way' {
+    interface TrueWayType {
+        EventAttrBase: typeof EventAttrBase
+    }
+}
+
+TrueWay.EventAttrBase = EventAttrBase
+
 export function getEventByMapIdAndEventId(mapId: number, eventId: number): EventAttr {
     if (TrueWay._data!?.[mapId]?.[eventId] === undefined) {
         throw new TrueWayError(`Map ${mapId} event ${eventId} dose not exist`)

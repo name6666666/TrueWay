@@ -57,8 +57,11 @@ declare module './true-way' {
     interface TrueWayType {
         getMapById: {(id: number): MapAttr}
         getTopMap: {(name: string): MapAttr}
+        MapAttrBase: typeof MapAttrBase
     }
 }
+
+TrueWay.MapAttrBase = MapAttrBase
 
 export interface MapTable {
     [name: string]: {
