@@ -1,28 +1,45 @@
 import mz from 'rmmz'
 import { param, TrueWayError } from './true-way'
-import jsTokens from 'js-tokens'
+import jsTokens, { Token } from 'js-tokens'
 
 
-const begin = `\x1b${param.js}[`
+const mark = `\x1b${param.js}[`
+const begin = '['
 const end = ']'
 
+const pattern = /(\x1b|\\)/g
 function mzToNormal(text: string): string {
-    return text.replace(/\x1b/g, '\\').replace(/\\/g, '\\\\')
+    return text.replace(pattern, (match, g1) => {
+        switch (g1) {
+            case '\x1b': return '\\'
+            case '\\': return '\\\\'
+            default: throw new TrueWayError('Unreachable. It is inner error')
+        }
+    })
 }
 
 function solveText(text: string): [string, string] {
-    const noMark = text.substring(begin.length)
+    const noMark = text.substring(mark.length)
     const tokens = jsTokens(noMark)
+    const tokenArr: Token[] = []
+    for (const token of tokens) tokenArr.push(token)
     let script = ''
     let depth = 1
-    for (const token of tokens) {
+    for (const i in tokenArr) {
+        const token = tokenArr[i]
         if (token.type === 'Punctuator') {
             if (token.value === end) {
                 depth--
-                if (depth === 0) return [String(window.eval(script)), noMark.substring(script.length + end.length)]
+                if (depth === 0) {
+                    let remain = ''
+                    for (let j = Number(i) + 1; j < tokenArr.length; j++) {
+                        remain += tokenArr[j].value
+                    }
+                    return [String(window.eval(script)), remain.substring(end.length)]
+                }
                 else script += token.value
             } else {
-                if (token.value === '[') depth++
+                if (token.value === begin) depth++
                 script += token.value
             }
         } else {
@@ -35,7 +52,7 @@ function solveText(text: string): [string, string] {
 function computeInsert(text: string) {
     let newText = ''
     for (;;) {
-        const i = text.indexOf(begin)
+        const i = text.indexOf(mark)
         if (i === -1) {
             newText += text
             break
