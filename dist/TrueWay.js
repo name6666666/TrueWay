@@ -128,8 +128,7 @@
  * @param js
  * @text 文本插值标签
  * @desc 为文本插入任意js表达式的标签
- * @type text
- * @default js
+ * @type struct<InsertedExpression>
  * 
  * @command initEvent
  * @text 初始化事件脚本
@@ -155,10 +154,36 @@
  * @on yes
  * @off no
  */
+
+/*~struct~InsertedExpression:
+ *
+ * @param label
+ * @text 标签名
+ * @type string
+ * @default js
+ * @desc 反斜杠后接着的标签名称
+ * 
+ * @param parentheses
+ * @text 括号
+ * @desc 标签名称后接着的括号，用来包裹js内容
+ * @type select
+ * @default []
+ * @option 小括号
+ * @value ()
+ * @option 中括号
+ * @value []
+ * @option 大括号
+ * @value {}
+ */
+
 (function (mz) {
     'use strict';
 
     class TrueWayError extends Error {
+        constructor(message) {
+            super(message);
+            this.name = TrueWayError.name;
+        }
     }
     // @ts-ignore
     window.TrueWay = {
@@ -171,7 +196,7 @@
     const param = originalParam;
     const identifierRegex = /^[\p{ID_Start}\p{ID_Continue}]*$/u;
     for (const ident of [
-        param.map, param.self, param.onEnter, param.initMap, param.js
+        param.map, param.self, param.onEnter, param.initMap, param.js.label
     ]) {
         const match = ident.match(identifierRegex);
         if (match === null) {
@@ -186,6 +211,9 @@
     }
     else {
         param.global = null;
+    }
+    if (!(param.js.parentheses in ['[]', '()', '{}'])) {
+        throw new TrueWayError(`Invailid parentheses ${param.js.parentheses}`);
     }
     function genReg(label) {
         return new RegExp(String.raw `<${label}>(((?!(</${label}>))[\s\S])*?)</${label}>`, 'g');
@@ -1425,9 +1453,9 @@
     };
     var jsTokens$1 = jsTokens;
 
-    const mark = `\x1b${param.js}[`;
-    const begin = '[';
-    const end = ']';
+    const begin = param.js.parentheses[0];
+    const mark = `\x1b${param.js.label}${begin}`;
+    const end = param.js.parentheses[1];
     function mzToNormal(text) {
         return text.replace(mzToNormal.pattern, (match, g1) => {
             switch (g1) {

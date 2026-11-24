@@ -2,10 +2,9 @@ import mz from 'rmmz'
 import { param, TrueWayError } from './true-way'
 import jsTokens, { Token } from 'js-tokens'
 
-
-const mark = `\x1b${param.js}[`
-const begin = '['
-const end = ']'
+const begin = param.js.parentheses[0]
+const mark = `\x1b${param.js.label}${begin}`
+const end = param.js.parentheses[1]
 
 function mzToNormal(text: string): string {
     return text.replace(mzToNormal.pattern, (match, g1) => {

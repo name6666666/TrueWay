@@ -128,8 +128,7 @@
  * @param js
  * @text 文本插值标签
  * @desc 为文本插入任意js表达式的标签
- * @type text
- * @default js
+ * @type struct<InsertedExpression>
  * 
  * @command initEvent
  * @text 初始化事件脚本
@@ -154,4 +153,25 @@
  * @default true
  * @on yes
  * @off no
+ */
+
+/*~struct~InsertedExpression:
+ *
+ * @param label
+ * @text 标签名
+ * @type string
+ * @default js
+ * @desc 反斜杠后接着的标签名称
+ * 
+ * @param parentheses
+ * @text 括号
+ * @desc 标签名称后接着的括号，用来包裹js内容
+ * @type select
+ * @default []
+ * @option 小括号
+ * @value ()
+ * @option 中括号
+ * @value []
+ * @option 大括号
+ * @value {}
  */

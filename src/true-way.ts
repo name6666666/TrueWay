@@ -1,6 +1,12 @@
 import mz from 'rmmz'
 
-export class TrueWayError extends Error {}
+
+export class TrueWayError extends Error {
+    constructor(message: string) {
+        super(message)
+        this.name = TrueWayError.name
+    }
+}
 
 export interface TrueWayData {
     [mapNumber: number]: MapData
@@ -30,7 +36,10 @@ export interface Param {
     self: string
     onEnter: string
     initMap: string
-    js: string
+    js: {
+        label: string
+        parentheses: '[]' | '{}' | '()'
+    }
     mapTable: boolean
     eventTable: boolean
     global: string | null
@@ -44,7 +53,7 @@ export const param: Param = originalParam
 
 const identifierRegex = /^[\p{ID_Start}\p{ID_Continue}]*$/u
 for (const ident of [
-    param.map, param.self, param.onEnter, param.initMap, param.js
+    param.map, param.self, param.onEnter, param.initMap, param.js.label
 ]) {
     const match = ident.match(identifierRegex)
     if (match === null) {
@@ -59,6 +68,10 @@ if (param.global) {
     }
 } else {
     param.global = null
+}
+
+if (!(param.js.parentheses in ['[]', '()', '{}'])) {
+    throw new TrueWayError(`Invailid parentheses ${param.js.parentheses}`)
 }
 
 export function genReg(label: string): RegExp {
