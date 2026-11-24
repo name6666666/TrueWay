@@ -20,7 +20,7 @@
  * TrueWay.getMapCurrent(): MapAttr
  * 获取当前地图的属性管理器
  * 
- * TrueWay.getMapByName(name: string): MapAttr
+ * TrueWay.getTopMap(name: string): MapAttr
  * 用名称获取顶层地图的属性管理器
  * 
  * TrueWay.getEventCurrent(): EventAttr
@@ -37,11 +37,11 @@
  * 内置属性，值为父地图的属性管理器
  * mapAttr.entered
  * 内置属性，值为是否进入过此地图
- * mapAttr.getMapByName(name: string): MapAttr
+ * mapAttr.getChild(name: string): MapAttr
  * 用名称获取子地图的属性管理器
  * mapAttr.getEventById(id: number): EventAttr
  * 用事件id获取地图里的事件的属性管理器
- * mapAttr.getEventByName(name: string): EventAttr
+ * mapAttr.getEvent(name: string): EventAttr
  * 用事件名称获取地图里的事件的属性管理器
  * 
  * 对于一个事件的属性管理器eventAttr

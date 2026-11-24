@@ -19,10 +19,10 @@ class MapAttrBase {
     getEventById(eventId: number): EventAttr {
         return getEventByMapIdAndEventId(this.id, eventId)
     }
-    getMapByName(name: string): MapAttr {
+    getChild(name: string): MapAttr {
         if (inverseMapTable === null || mapTable === null) {
             throw new TrueWayError(
-                `${this.getMapByName.name} unavailable. Particular configuration required`
+                `${this.getChild.name} unavailable. Particular configuration required`
             )
         }
         const path = [...inverseMapTable[this.id], name]
@@ -35,10 +35,10 @@ class MapAttrBase {
         if (!(this.id in TrueWay._data!)) throw new TrueWayError(`Unknown map name ${name}`)
         return TrueWay.getMapById!(target.id)
     }
-    getEventByName(name: string): EventAttr {
+    getEvent(name: string): EventAttr {
         if (eventTable === null) {
             throw new TrueWayError(
-                `${this.getEventByName.name} unavailable. Particular configuration required`
+                `${this.getEvent.name} unavailable. Particular configuration required`
             )
         }
         const events = eventTable[this.id]
@@ -55,7 +55,7 @@ class MapAttrBase {
 declare module './true-way' {
     interface TrueWayType {
         getMapById: {(id: number): MapAttr}
-        getMapByName: {(name: string): MapAttr}
+        getTopMap: {(name: string): MapAttr}
         getMapCurrent: {(): MapAttr}
     }
 }
@@ -128,9 +128,9 @@ TrueWay.getMapById = function(id) {
     })
 }
 
-TrueWay.getMapByName = function(name) {
-    if (mapTable === null) throw new TrueWayError(`${TrueWay.getMapByName!.name} unavailable. Particular configuration required`)
-    if (!(name in mapTable)) throw new TrueWayError(`Map ${name} is not a top map. Can not use ${TrueWay.getMapByName!.name}`)
+TrueWay.getTopMap = function(name) {
+    if (mapTable === null) throw new TrueWayError(`${TrueWay.getTopMap!.name} unavailable. Particular configuration required`)
+    if (!(name in mapTable)) throw new TrueWayError(`Map ${name} is not a top map. Can not use ${TrueWay.getTopMap!.name}`)
     return TrueWay.getMapById!(mapTable[name].id)
 }
 
