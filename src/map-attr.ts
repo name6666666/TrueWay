@@ -140,29 +140,22 @@ TrueWay.getMapCurrent = function() {
     return TrueWay.getMapById!(mz.$gameMap.mapId())
 }
 
-
-let onEnterPattern: RegExp
-
-if (param.onEnter) {
-    const label = escape(String(param.onEnter))
-    onEnterPattern = genReg(label)
-}
+const onEnterPattern = genReg(escape(param.onEnter))
 
 const _Game_Map_setup = mz.Game_Map.prototype.setup
 mz.Game_Map.prototype.setup = function(mapId) {
     _Game_Map_setup.call(this, mapId)
+
     const map = TrueWay.getMapCurrent!()
-    if (param.map) {
-        // @ts-ignore
-        window[param.map] = map
+    // @ts-ignore
+    window[param.map] = map
+
+    const matches = mz.$dataMap.note.matchAll(onEnterPattern)
+    for (const match of matches) {
+        const script = match[1]
+        const func = new Function(script)
+        func()
     }
-    if (param.onEnter) {
-        const matches = mz.$dataMap.note.matchAll(onEnterPattern)
-        for (const match of matches) {
-            const script = match[1]
-            const func = new Function(script)
-            func()
-        }
-    }
+
     map.entered = true
 }

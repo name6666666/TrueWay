@@ -81,8 +81,7 @@ const _Game_Map_setup = mz.Game_Map.prototype.setup
 mz.Game_Map.prototype.setup = function(mapId) {
     _Game_Map_setup.call(this, mapId)
     const self = TrueWay.getEventCurrent!()
-    if (param.self) {
-        // @ts-ignore
-        window[param.self] = self
-    }
+    // @ts-ignore
+    window[param.self] = self
+
 }

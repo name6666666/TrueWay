@@ -82,25 +82,25 @@
  * 
  * @param map
  * @text 对应当前地图的全局变量
- * @desc 设置一个全局变量，它总是当前地图的属性管理器，为空禁用
+ * @desc 设置一个全局变量，它总是当前地图的属性管理器
  * @type text
  * @default map
  * 
  * @param self
  * @text 对应当前事件的全局变量
- * @desc 设置一个全局变量，它总是当前事件的属性管理器，为空禁用
+ * @desc 设置一个全局变量，它总是当前事件的属性管理器
  * @type text
  * @default self
  * 
  * @param onEnter
  * @text 进入地图脚本标签
- * @desc 进入地图时，在所有事件开始判定之间就执行的脚本的标签，为空禁用
+ * @desc 进入地图时，在所有事件开始判定之间就执行的脚本的标签
  * @type text
  * @default onEnter
  * 
  * @param initMap
  * @text 初始化地图脚本标签
- * @desc 在游戏启动时为每个地图初始化属性的脚本的标签，为空报错
+ * @desc 在游戏启动时为每个地图初始化属性的脚本的标签
  * @type text
  * @default init
  * 
