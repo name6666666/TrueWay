@@ -1437,7 +1437,7 @@
                 if (token.value === end) {
                     depth--;
                     if (depth === 0)
-                        return [window.eval(script), noMark.substring(script.length + end.length)];
+                        return [String(window.eval(script)), noMark.substring(script.length + end.length)];
                     else
                         script += token.value;
                 }
@@ -1448,10 +1448,10 @@
                 }
             }
             else {
-                script += token.value;
+                script += token.value.replace('\x1b', '\\').replace('\\', '\\\\');
             }
         }
-        throw new TrueWayError('6767');
+        throw new TrueWayError(`Boarderless inserted expression:\n ${text.replace('\x1b', '\\').replace('\\', '\\\\')}`);
     }
     function computeInsert(text) {
         let newText = '';
