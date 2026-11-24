@@ -20,7 +20,7 @@
  * TrueWay.getMapCurrent(): MapAttr
  * 获取当前地图的属性管理器
  * 
- * TrueWay.getMapByName(name: string): MapAttr
+ * TrueWay.getTopMap(name: string): MapAttr
  * 用名称获取顶层地图的属性管理器
  * 
  * TrueWay.getEventCurrent(): EventAttr
@@ -37,11 +37,11 @@
  * 内置属性，值为父地图的属性管理器
  * mapAttr.entered
  * 内置属性，值为是否进入过此地图
- * mapAttr.getMapByName(name: string): MapAttr
+ * mapAttr.getChild(name: string): MapAttr
  * 用名称获取子地图的属性管理器
  * mapAttr.getEventById(id: number): EventAttr
  * 用事件id获取地图里的事件的属性管理器
- * mapAttr.getEventByName(name: string): EventAttr
+ * mapAttr.getEvent(name: string): EventAttr
  * 用事件名称获取地图里的事件的属性管理器
  * 
  * 对于一个事件的属性管理器eventAttr
@@ -148,7 +148,7 @@
     ]) {
         const match = ident.match(identifierRegex);
         if (match === null) {
-            throw new TrueWayError(`Invailid identifier ${ident}`);
+            throw new TrueWayError(`Invailid identifier ${JSON.stringify(ident)}`);
         }
     }
     function genReg(label) {
@@ -657,7 +657,7 @@
                 addMapTable(children, child);
             }
             if (node.name in table) {
-                throw new TrueWayError(`Duplicated map name ${node.name}. Modify name or disable the key feature to pass`);
+                throw new TrueWayError(`Duplicated map name ${JSON.stringify(node.name)}. Modify name or disable the key feature to pass`);
             }
             table[node.name] = {
                 id: node.id,
@@ -690,7 +690,7 @@
                     continue;
                 console.log(e.name);
                 if (e.name in events) {
-                    throw new TrueWayError(`Duplicated event name ${e.name}. Modify name or disable the key feature to pass`);
+                    throw new TrueWayError(`Duplicated event name ${JSON.stringify(e.name)}. Modify name or disable the key feature to pass`);
                 }
                 events[e.name] = e.id;
             }
@@ -711,15 +711,62 @@
     		.replace(/-/g, '\\x2d');
     }
 
+    /******************************************************************************
+    Copyright (c) Microsoft Corporation.
+
+    Permission to use, copy, modify, and/or distribute this software for any
+    purpose with or without fee is hereby granted.
+
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+    REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+    AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+    INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+    LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+    OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+    PERFORMANCE OF THIS SOFTWARE.
+    ***************************************************************************** */
+    /* global Reflect, Promise, SuppressedError, Symbol, Iterator */
+
+
+    function __classPrivateFieldGet(receiver, state, kind, f) {
+        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+        return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+    }
+
+    function __classPrivateFieldSet(receiver, state, value, kind, f) {
+        if (kind === "m") throw new TypeError("Private method is not writable");
+        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+        return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
+    }
+
+    typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
+        var e = new Error(message);
+        return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
+    };
+
+    var _EventAttrBase_mapId;
+    class EventAttrBase {
+        constructor(mapId) {
+            _EventAttrBase_mapId.set(this, void 0);
+            __classPrivateFieldSet(this, _EventAttrBase_mapId, mapId, "f");
+        }
+        get map() {
+            return TrueWay.getMapById(__classPrivateFieldGet(this, _EventAttrBase_mapId, "f"));
+        }
+    }
+    _EventAttrBase_mapId = new WeakMap();
     function getEventByMapIdAndEventId(mapId, eventId) {
-        // @ts-ignore
-        return new Proxy({}, {
+        if (TrueWay._data?.[mapId]?.[eventId] === undefined) {
+            throw new TrueWayError(`Map ${mapId} event ${eventId} dose not exist`);
+        }
+        return new Proxy(new EventAttrBase(mapId), {
             get: function (target, p, receiver) {
                 const ret = Reflect.get(TrueWay._data[mapId][eventId], p);
                 if (ret === undefined) {
-                    switch (p) {
-                        case 'id': return eventId;
-                        case 'map': return TrueWay.getMapById(mapId);
+                    if (p in target) {
+                        return Reflect.get(target, p, receiver);
                     }
                     throw new TrueWayError(`Unknown attribute ${String(p)}, when access map ${mapId} event ${eventId}`);
                 }
@@ -768,14 +815,59 @@
         const eventId = mz.$gameMap._interpreter.eventId();
         return getEventByMapIdAndEventId(mapId, eventId);
     };
-    const _Game_Map_setup$1 = mz.Game_Map.prototype.setup;
-    mz.Game_Map.prototype.setup = function (mapId) {
-        _Game_Map_setup$1.call(this, mapId);
-        const self = TrueWay.getEventCurrent();
-        // @ts-ignore
-        window[param.self] = self;
-    };
+    // @ts-ignore
+    window[param.self] = new Proxy({}, {
+        get: function (target, p, receiver) {
+            const eventAttr = TrueWay.getEventCurrent();
+            return Reflect.get(eventAttr, p);
+        },
+        set: function (target, p, newValue) {
+            const eventAttr = TrueWay.getEventCurrent();
+            return Reflect.set(eventAttr, p, newValue);
+        }
+    });
 
+    class MapAttrBase {
+        constructor(id) {
+            this.entered = false;
+            this.id = id;
+        }
+        getEventById(eventId) {
+            return getEventByMapIdAndEventId(this.id, eventId);
+        }
+        getChild(name) {
+            if (inverseMapTable === null || mapTable === null) {
+                throw new TrueWayError(`${this.getChild.name} unavailable. Particular configuration required`);
+            }
+            const path = [...inverseMapTable[this.id], name];
+            let target = mapTable[path[0]];
+            for (const i in path) {
+                if (i === '0')
+                    continue;
+                const part = path[i];
+                target = target.children[part];
+            }
+            if (!target)
+                throw new TrueWayError(`Unknown map name ${name}`);
+            return TrueWay.getMapById(target.id);
+        }
+        getEvent(name) {
+            if (eventTable === null) {
+                throw new TrueWayError(`${this.getEvent.name} unavailable. Particular configuration required`);
+            }
+            const events = eventTable[this.id];
+            if (!(name in events))
+                throw new TrueWayError(`Unknown event name ${name}`);
+            const eventId = events[name];
+            return getEventByMapIdAndEventId(this.id, eventId);
+        }
+        get parent() {
+            const newId = mz.$dataMapInfos[this.id].parentId;
+            if (newId === 0)
+                throw new TrueWayError(`Map ${this.id} has no parent`);
+            return TrueWay.getMapById(newId);
+        }
+    }
     let mapTable;
     let inverseMapTable;
     let eventTable;
@@ -803,51 +895,15 @@
             }
         }
     }
-    function parent(id) {
-        const newId = mz.$dataMapInfos[id].parentId;
-        if (newId === 0)
-            throw new TrueWayError(`Map ${id} has no parent`);
-        return TrueWay.getMapById(newId);
-    }
-    // @ts-ignore
     TrueWay.getMapById = function (id) {
         if (!(id in TrueWay._data))
             throw new TrueWayError(`Unknown map id ${id}`);
-        return new Proxy({}, {
+        return new Proxy(new MapAttrBase(id), {
             get: function (target, p, receiver) {
                 const ret = Reflect.get(TrueWay._data[id].mapVars, p);
                 if (ret === undefined) {
-                    switch (p) {
-                        case 'id': return id;
-                        case 'parent': return parent(id);
-                        case 'entered': return false;
-                        case 'getEventById': return function (eventId) {
-                            return getEventByMapIdAndEventId(id, eventId);
-                        };
-                        case 'getMapByName': return function (name) {
-                            if (inverseMapTable === null || mapTable === null) {
-                                throw new TrueWayError(`${TrueWay.getMapByName.name} unavailable. Particular configuration required`);
-                            }
-                            const path = [...inverseMapTable[id], name];
-                            let target = mapTable[path[0]];
-                            for (const i in path) {
-                                if (i === '0')
-                                    continue;
-                                const part = path[i];
-                                target = target.children[part];
-                            }
-                            if (!(id in TrueWay._data))
-                                throw new TrueWayError(`Unknown map name ${name}`);
-                            return TrueWay.getMapById(target.id);
-                        };
-                        case 'getEventByName': return function (name) {
-                            if (eventTable === null) {
-                                throw new TrueWayError(`getEventByName unavailable. Particular configuration required`);
-                            }
-                            const events = eventTable[id];
-                            const eventId = events[name];
-                            return getEventByMapIdAndEventId(id, eventId);
-                        };
+                    if (p in target) {
+                        return Reflect.get(target, p, receiver);
                     }
                     throw new TrueWayError(`Unknown attribute ${String(p)}, when access map ${id}`);
                 }
@@ -861,11 +917,11 @@
             }
         });
     };
-    TrueWay.getMapByName = function (name) {
+    TrueWay.getTopMap = function (name) {
         if (mapTable === null)
-            throw new TrueWayError(`${TrueWay.getMapByName.name} unavailable. Particular configuration required`);
+            throw new TrueWayError(`${TrueWay.getTopMap.name} unavailable. Particular configuration required`);
         if (!(name in mapTable))
-            throw new TrueWayError(`Map ${name} is not a top map. Can not use ${TrueWay.getMapByName.name}`);
+            throw new TrueWayError(`Map ${name} is not a top map. Can not use ${TrueWay.getTopMap.name}`);
         return TrueWay.getMapById(mapTable[name].id);
     };
     TrueWay.getMapCurrent = function () {

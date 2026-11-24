@@ -9,11 +9,25 @@ export interface EventAttr extends EventAttrBase {
 
 class EventAttrBase {
     #mapId: number
-    constructor(mapId: number) {
+    id: number
+    constructor(mapId: number, eventId: number) {
         this.#mapId = mapId
+        this.id = eventId
     }
     get map(): MapAttr {
         return TrueWay.getMapById!(this.#mapId)
+    }
+    findEvent(x: number, y: number): EventAttr {
+        const dataMapAll = TrueWay.$dataMapAll!
+        const events = dataMapAll[this.#mapId].events
+        const [selfX, selfY] = [events[this.id].x, events[this.id].y]
+        const target = events.find((v, _i, _o) => {
+            return (v.x === (selfX + x)) && (v.y === (selfY + y))
+        })
+        if (target === undefined) throw new TrueWayError(
+            `Map ${this.#mapId} event ${this.id} can not find (${x}, ${y})`
+        )
+        return getEventByMapIdAndEventId(this.#mapId, target.id)
     }
 }
 
@@ -21,7 +35,7 @@ export function getEventByMapIdAndEventId(mapId: number, eventId: number): Event
     if (TrueWay._data!?.[mapId]?.[eventId] === undefined) {
         throw new TrueWayError(`Map ${mapId} event ${eventId} dose not exist`)
     }
-    return new Proxy(new EventAttrBase(mapId), {
+    return new Proxy(new EventAttrBase(mapId, eventId), {
         get: function(target, p, receiver) {
             const ret = Reflect.get(TrueWay._data![mapId][eventId], p)
             if (ret === undefined) {
