@@ -11,7 +11,7 @@ export interface EventAttr extends EventAttrBase {
     d: boolean
 }
 
-class EventAttrBase {
+export class EventAttrBase {
     mapId: number
     id: number
     constructor(mapId: number, eventId: number) {

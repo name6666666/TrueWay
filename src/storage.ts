@@ -1,5 +1,5 @@
 import mz from 'rmmz'
-import { MapData, TrueWayData, TrueWayError } from './true-way'
+import { MapData, TrueWayData } from './true-way'
 import fetchSync from 'sync-fetch'
 
 

@@ -10,7 +10,7 @@ export interface MapAttr extends MapAttrBase {
     [attr: string]: any
 }
 
-class MapAttrBase {
+export class MapAttrBase {
     id: number
     entered: boolean = false
     constructor(id: number) {

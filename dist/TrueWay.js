@@ -1565,12 +1565,12 @@
         return computeInsert(text);
     };
 
+    exports.EventAttrBase = EventAttrBase;
+    exports.MapAttrBase = MapAttrBase;
     exports.TrueWayError = TrueWayError;
     exports.genReg = genReg;
     exports.getEventByMapIdAndEventId = getEventByMapIdAndEventId;
     exports.param = param;
-    exports.solveEventTable = solveEventTable;
-    exports.solveMapTable = solveMapTable;
 
     return exports;
 
