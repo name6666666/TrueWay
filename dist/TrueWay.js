@@ -109,7 +109,7 @@
  * 
  * @param global
  * @text 游戏变量管理器的全局变量
- * @desc 设置一个全局变量，用来更方便地管理游戏变量，会为游戏变量名称建表，代价是无法创建同名变量，为空可禁用
+ * @desc 设置一个全局变量，用来更方便地管理游戏变量和开关，会为游戏变量和开关名称建表，代价是无法创建同名开关或变量，为空可禁用
  * @type text
  * @default global
  * 
@@ -1022,6 +1022,7 @@
         map.entered = true;
     };
 
+    const error = (v) => new TrueWayError(`Duplicated global variable or switch name ${v}. Modify name or disable the key feature to pass`);
     function createTable() {
         const table = {};
         for (const i in mz.$dataSystem.variables) {
@@ -1029,9 +1030,18 @@
             if (!v)
                 continue;
             if (v in table) {
-                throw new TrueWayError(`Duplicated global variable name ${v}. Modify name or disable the key feature to pass`);
+                throw error(v);
             }
-            table[v] = Number(i);
+            table[v] = { type: 0 /* IdType.VAR */, value: Number(i) };
+        }
+        for (const i in mz.$dataSystem.switches) {
+            const v = mz.$dataSystem.switches[i];
+            if (!v)
+                continue;
+            if (v in table) {
+                throw error(v);
+            }
+            table[v] = { type: 1 /* IdType.SWITCH */, value: Number(i) };
         }
         return table;
     }
@@ -1045,10 +1055,34 @@
         // @ts-ignore
         window[param.global] = new Proxy({}, {
             get: function (target, p, receiver) {
-                return mz.$gameVariables.value(table[p]);
+                const id = table[p];
+                if (id === undefined) {
+                    throw new TrueWayError(`Getting unknown global variable or switch name ${p}`);
+                }
+                switch (id.type) {
+                    case 1 /* IdType.SWITCH */:
+                        return mz.$gameSwitches.value(id.value);
+                    case 0 /* IdType.VAR */:
+                        return mz.$gameVariables.value(id.value);
+                }
             },
             set: function (target, p, newValue) {
-                mz.$gameVariables.setValue(table[p], newValue);
+                if (newValue === undefined) {
+                    throw new TrueWayError(`Can not set global ${p} to undefined`);
+                }
+                const id = table[p];
+                if (id === undefined) {
+                    throw new TrueWayError(`Setting unknown global variable or switch name ${p}`);
+                }
+                switch (id.type) {
+                    case 1 /* IdType.SWITCH */:
+                        if (typeof newValue !== 'boolean') {
+                            throw new TrueWayError(`Can not set global switch ${p} to non-boolean ${newValue}`);
+                        }
+                        mz.$gameSwitches.setValue(id.value, newValue);
+                    case 0 /* IdType.VAR */:
+                        mz.$gameVariables.setValue(id.value, newValue);
+                }
                 return true;
             }
         });
