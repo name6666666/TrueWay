@@ -8,7 +8,6 @@ export default {
   output: {
     file: 'dist/TrueWay.js',
     format: 'iife',
-    name: 'TrueWay',
     globals: { rmmz: "window" }
   },
   plugins: [

@@ -56,6 +56,12 @@
  * 内置属性，值为事件id
  * eventAttr.map
  * 内置属性，值为所属地图的属性管理器
+ * eventAttr.mapId
+ * 内置属性，值为所属地图的id
+ * eventAttr.a eventAttr.b eventAttr.c eventAttr.d
+ * 内置属性，访问独立开关
+ * eventAttr.a = true
+ * 可以设置独立开关
  * 
  * 对于global
  * global.foo
@@ -82,6 +88,7 @@
  * 
  * “获得了药水\js[self.potion]瓶”
  * “\js[["[67"][0]]”
+ * “挑逗引号"\js["114514"]，压根不怕”
  * 用\js插入任意表达式，插值解析器能理解js词法，完美应对较复杂情况
  * 
  * 插件指令：
@@ -177,7 +184,7 @@
  * @value {}
  */
 
-(function (mz) {
+(function (exports, mz) {
     'use strict';
 
     class TrueWayError extends Error {
@@ -776,69 +783,52 @@
     		.replace(/-/g, '\\x2d');
     }
 
-    /******************************************************************************
-    Copyright (c) Microsoft Corporation.
-
-    Permission to use, copy, modify, and/or distribute this software for any
-    purpose with or without fee is hereby granted.
-
-    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-    REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-    AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-    INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-    LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-    OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-    PERFORMANCE OF THIS SOFTWARE.
-    ***************************************************************************** */
-    /* global Reflect, Promise, SuppressedError, Symbol, Iterator */
-
-
-    function __classPrivateFieldGet(receiver, state, kind, f) {
-        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
-        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
-        return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
-    }
-
-    function __classPrivateFieldSet(receiver, state, value, kind, f) {
-        if (kind === "m") throw new TypeError("Private method is not writable");
-        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
-        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
-        return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
-    }
-
-    typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
-        var e = new Error(message);
-        return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
-    };
-
-    var _EventAttrBase_mapId;
     class EventAttrBase {
         constructor(mapId, eventId) {
-            _EventAttrBase_mapId.set(this, void 0);
-            __classPrivateFieldSet(this, _EventAttrBase_mapId, mapId, "f");
+            this.mapId = mapId;
             this.id = eventId;
         }
         get map() {
-            return TrueWay.getMapById(__classPrivateFieldGet(this, _EventAttrBase_mapId, "f"));
+            return TrueWay.getMapById(this.mapId);
         }
         findEvent(x, y) {
             const dataMapAll = TrueWay.$dataMapAll;
-            const events = dataMapAll[__classPrivateFieldGet(this, _EventAttrBase_mapId, "f")].events;
+            const events = dataMapAll[this.mapId].events;
             const [selfX, selfY] = [events[this.id].x, events[this.id].y];
             const target = events.find((v, _i, _o) => {
                 return (v.x === (selfX + x)) && (v.y === (selfY + y));
             });
             if (target === undefined)
-                throw new TrueWayError(`Map ${__classPrivateFieldGet(this, _EventAttrBase_mapId, "f")} event ${this.id} can not find (${x}, ${y})`);
-            return getEventByMapIdAndEventId(__classPrivateFieldGet(this, _EventAttrBase_mapId, "f"), target.id);
+                throw new TrueWayError(`Map ${this.mapId} event ${this.id} can not find (${x}, ${y})`);
+            return getEventByMapIdAndEventId(this.mapId, target.id);
+        }
+        static hasSetter(propName) {
+            const descriptor = Object.getOwnPropertyDescriptor(this.prototype, propName);
+            return descriptor && typeof descriptor.set === 'function';
+        }
+        static initProperties() {
+            for (const name of ['A', 'B', 'C', 'D']) {
+                Object.defineProperty(EventAttrBase.prototype, name.toLowerCase(), {
+                    get: function () {
+                        return mz.$gameSelfSwitches.value([this.mapId, this.id, name]);
+                    },
+                    set: function (v) {
+                        if (typeof v !== 'boolean') {
+                            throw new TrueWayError(`Can not set map ${this.mapId} event ${this.id} switch ${name} to non-boolean`);
+                        }
+                        mz.$gameSelfSwitches.setValue([this.mapId, this.id, name], v);
+                    }
+                });
+            }
         }
     }
-    _EventAttrBase_mapId = new WeakMap();
+    EventAttrBase.initProperties();
     TrueWay.EventAttrBase = EventAttrBase;
     function getEventByMapIdAndEventId(mapId, eventId) {
         if (TrueWay._data?.[mapId]?.[eventId] === undefined) {
             throw new TrueWayError(`Map ${mapId} event ${eventId} dose not exist`);
         }
+        // @ts-expect-error
         return new Proxy(new EventAttrBase(mapId, eventId), {
             get: function (target, p, receiver) {
                 const ret = Reflect.get(TrueWay._data[mapId][eventId], p);
@@ -853,6 +843,9 @@
             set: function (target, p, newValue) {
                 if (newValue === undefined) {
                     throw new TrueWayError(`Can not assign attribute ${String(p)} as undefined, when access map ${mapId} event ${eventId}`);
+                }
+                if (EventAttrBase.hasSetter(p)) {
+                    return Reflect.set(target, p, newValue);
                 }
                 return Reflect.set(TrueWay._data[mapId][eventId], p, newValue);
             }
@@ -945,6 +938,10 @@
                 throw new TrueWayError(`Map ${this.id} has no parent`);
             return TrueWay.getMapById(newId);
         }
+        static hasSetter(propName) {
+            const descriptor = Object.getOwnPropertyDescriptor(this.prototype, propName);
+            return descriptor && typeof descriptor.set === 'function';
+        }
     }
     TrueWay.MapAttrBase = MapAttrBase;
     let mapTable;
@@ -991,6 +988,9 @@
             set: function (target, p, newValue) {
                 if (newValue === undefined) {
                     throw new TrueWayError(`Can not assign attribute ${String(p)} as undefined, when access map ${id}`);
+                }
+                if (MapAttrBase.hasSetter(p)) {
+                    return Reflect.set(target, p, newValue);
                 }
                 return Reflect.set(TrueWay._data[id].mapVars, p, newValue);
             }
@@ -1565,4 +1565,13 @@
         return computeInsert(text);
     };
 
-})(window);
+    exports.TrueWayError = TrueWayError;
+    exports.genReg = genReg;
+    exports.getEventByMapIdAndEventId = getEventByMapIdAndEventId;
+    exports.param = param;
+    exports.solveEventTable = solveEventTable;
+    exports.solveMapTable = solveMapTable;
+
+    return exports;
+
+})({}, window);

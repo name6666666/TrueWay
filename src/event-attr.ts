@@ -5,6 +5,10 @@ import { MapAttr } from './map-attr'
 
 export interface EventAttr extends EventAttrBase {
     [attr: string]: any
+    a: boolean
+    b: boolean
+    c: boolean
+    d: boolean
 }
 
 class EventAttrBase {
@@ -63,6 +67,7 @@ export function getEventByMapIdAndEventId(mapId: number, eventId: number): Event
     if (TrueWay._data!?.[mapId]?.[eventId] === undefined) {
         throw new TrueWayError(`Map ${mapId} event ${eventId} dose not exist`)
     }
+    // @ts-expect-error
     return new Proxy(new EventAttrBase(mapId, eventId), {
         get: function(target, p, receiver) {
             const ret = Reflect.get(TrueWay._data![mapId][eventId], p)
