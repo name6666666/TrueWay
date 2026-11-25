@@ -51,6 +51,10 @@ class MapAttrBase {
         if (newId === 0) throw new TrueWayError(`Map ${this.id} has no parent`)
         return TrueWay.getMapById!(newId)
     }
+    static hasSetter(propName: string) {
+        const descriptor = Object.getOwnPropertyDescriptor(this.prototype, propName);
+        return descriptor && typeof descriptor.set === 'function';
+    }
 }
 
 declare module './true-way' {
@@ -125,6 +129,9 @@ TrueWay.getMapById = function(id) {
         set: function(target, p, newValue) {
             if (newValue === undefined) {
                 throw new TrueWayError(`Can not assign attribute ${String(p)} as undefined, when access map ${id}`)
+            }
+            if (MapAttrBase.hasSetter(p as string)) {
+                return Reflect.set(target, p, newValue)
             }
             return Reflect.set(TrueWay._data![id].mapVars, p, newValue)
         }

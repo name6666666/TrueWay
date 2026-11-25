@@ -56,6 +56,12 @@
  * 内置属性，值为事件id
  * eventAttr.map
  * 内置属性，值为所属地图的属性管理器
+ * eventAttr.mapId
+ * 内置属性，值为所属地图的id
+ * eventAttr.a eventAttr.b eventAttr.c eventAttr.d
+ * 内置属性，访问独立开关
+ * eventAttr.a = true
+ * 可以设置独立开关
  * 
  * 对于global
  * global.foo
@@ -82,6 +88,7 @@
  * 
  * “获得了药水\js[self.potion]瓶”
  * “\js[["[67"][0]]”
+ * “挑逗引号"\js["114514"]，压根不怕”
  * 用\js插入任意表达式，插值解析器能理解js词法，完美应对较复杂情况
  * 
  * 插件指令：

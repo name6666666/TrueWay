@@ -8,28 +8,48 @@ export interface EventAttr extends EventAttrBase {
 }
 
 class EventAttrBase {
-    #mapId: number
+    mapId: number
     id: number
     constructor(mapId: number, eventId: number) {
-        this.#mapId = mapId
+        this.mapId = mapId
         this.id = eventId
     }
     get map(): MapAttr {
-        return TrueWay.getMapById!(this.#mapId)
+        return TrueWay.getMapById!(this.mapId)
     }
     findEvent(x: number, y: number): EventAttr {
         const dataMapAll = TrueWay.$dataMapAll!
-        const events = dataMapAll[this.#mapId].events
+        const events = dataMapAll[this.mapId].events
         const [selfX, selfY] = [events[this.id].x, events[this.id].y]
         const target = events.find((v, _i, _o) => {
             return (v.x === (selfX + x)) && (v.y === (selfY + y))
         })
         if (target === undefined) throw new TrueWayError(
-            `Map ${this.#mapId} event ${this.id} can not find (${x}, ${y})`
+            `Map ${this.mapId} event ${this.id} can not find (${x}, ${y})`
         )
-        return getEventByMapIdAndEventId(this.#mapId, target.id)
+        return getEventByMapIdAndEventId(this.mapId, target.id)
+    }
+    static hasSetter(propName: string) {
+        const descriptor = Object.getOwnPropertyDescriptor(this.prototype, propName);
+        return descriptor && typeof descriptor.set === 'function';
+    }
+    static initProperties() {
+        for (const name of ['A', 'B', 'C', 'D'] as const) {
+            Object.defineProperty(EventAttrBase.prototype, name.toLowerCase(), {
+                get: function() {
+                    return mz.$gameSelfSwitches.value([this.mapId, this.id, name])
+                },
+                set: function(v: boolean) {
+                    if (typeof v !== 'boolean') {
+                        throw new TrueWayError(`Can not set map ${this.mapId} event ${this.id} switch ${name} to non-boolean`)
+                    }
+                    mz.$gameSelfSwitches.setValue([this.mapId, this.id, name], v)
+                }
+            })
+        }
     }
 }
+EventAttrBase.initProperties()
 
 declare module './true-way' {
     interface TrueWayType {
@@ -59,6 +79,9 @@ export function getEventByMapIdAndEventId(mapId: number, eventId: number): Event
                 throw new TrueWayError(
                     `Can not assign attribute ${String(p)} as undefined, when access map ${mapId} event ${eventId}`
                 )
+            }
+            if (EventAttrBase.hasSetter(p as string)) {
+                return Reflect.set(target, p, newValue)
             }
             return Reflect.set(TrueWay._data![mapId][eventId], p, newValue)
         }
