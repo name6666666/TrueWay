@@ -42,12 +42,14 @@ export interface Param {
     }
     mapTable: boolean
     eventTable: boolean
+    eventMonitor: boolean
     global: string | null
 }
 
 const originalParam = mz.PluginManager.parameters('TrueWay')
 originalParam.mapTable = originalParam.mapTable === 'true' ? true : false
 originalParam.eventTable = originalParam.eventTable === 'true' ? true : false
+originalParam.eventMonitor = originalParam.eventMonitor === 'true' ? true : false
 originalParam.js = JSON.parse(originalParam.js as string)
 // @ts-ignore
 export const param: Param = originalParam

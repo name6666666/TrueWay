@@ -161,6 +161,14 @@
  * @default true
  * @on yes
  * @off no
+ * 
+ * @param eventMonitor
+ * @text 动态事件监控
+ * @desc 监控新添加的动态事件，让它们也融入TrueWay的系统，适合配合其他动态事件插件
+ * @type boolean
+ * @default true
+ * @on yes
+ * @off no
  */
 
 /*~struct~InsertedExpression:
