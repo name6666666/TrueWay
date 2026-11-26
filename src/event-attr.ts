@@ -1,8 +1,6 @@
 import mz from 'rmmz'
 import { param, TrueWayError } from './true-way.ts'
 import { MapAttr } from './map-attr.ts'
-import onChange from 'on-change'
-import diff from 'deep-diff'
 
 
 export interface EventAttr extends EventAttrBase {
@@ -145,31 +143,3 @@ window[param.self] = new Proxy({}, {
         return Reflect.set(eventAttr, p, newValue)
     }
 })
-
-declare module './true-way.ts' {
-    interface TrueWayType {
-        _currentTrueEvents: mz.Game_Event[]
-    }
-}
-
-export let dynamicEvents: mz.Game_Event[]
-
-if (param.eventMonitor) {
-    const _Game_Map_setup = mz.Game_Map.prototype.setup
-    mz.Game_Map.prototype.setup = function(mapId) {
-        _Game_Map_setup.call(this, mapId)
-        TrueWay._currentTrueEvents = mz.$gameMap._events
-        dynamicEvents = []
-        mz.$gameMap._events = onChange(TrueWay._currentTrueEvents, (path, value, previous, applyData) => {
-            if (path !== '') return
-            const difference = diff(previous, value)
-            if (difference === undefined) return
-            for (const i of difference) {
-                if (i.kind === 'N') {
-                    dynamicEvents.push(i.rhs as mz.Game_Event)
-                    console.log(dynamicEvents)
-                }
-            }
-        })
-    }
-}
