@@ -26,6 +26,7 @@ export class EventAttrBase {
         const events = dataMapAll[this.mapId].events
         const [selfX, selfY] = [events[this.id].x, events[this.id].y]
         const target = events.find((v, _i, _o) => {
+            if (!v) return false
             return (v.x === (selfX + x)) && (v.y === (selfY + y))
         })
         if (target === undefined) throw new TrueWayError(

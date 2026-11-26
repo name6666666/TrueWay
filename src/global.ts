@@ -68,8 +68,10 @@ if (param.global !== null) {
                         throw new TrueWayError(`Can not set global switch ${p as string} to non-boolean ${newValue}`)
                     }
                     mz.$gameSwitches.setValue(id.value, newValue)
+                    break
                 case IdType.VAR:
                     mz.$gameVariables.setValue(id.value, newValue)
+                    break
             }
             return true
         }
