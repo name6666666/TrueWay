@@ -156,6 +156,7 @@ mz.Game_Map.prototype.setup = function(mapId) {
     _Game_Map_setup.call(this, mapId)
     TrueWay._currentTrueEvents = mz.$gameMap._events
     mz.$gameMap._events = onChange(TrueWay._currentTrueEvents, (path, value, previous, applyData) => {
-        
+        if (path !== '') return
+        console.log(value)
     })
 }
