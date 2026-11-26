@@ -9,6 +9,10 @@ import CloneMap from './clone/clone-map.js';
 import CloneWeakSet from './clone/clone-weakset.js';
 import CloneWeakMap from './clone/clone-weakmap.js';
 
+function at(arr, i) {
+    return arr[i < 0 ? arr.length + i : i];
+}
+
 export default class SmartClone {
 	constructor(hasOnValidate) {
 		this._stack = [];
@@ -66,23 +70,23 @@ export default class SmartClone {
 	}
 
 	update(fullPath, property, value) {
-		this._stack.at(-1).update(fullPath, property, value);
+		at(this._stack, -1).update(fullPath, property, value);
 	}
 
 	preferredThisArg(target, thisArgument, thisProxyTarget) {
 		const {name} = target;
 		const isHandledMethod = SmartClone.isHandledMethod(thisProxyTarget, name);
 
-		return this._stack.at(-1)
+		return at(this._stack, -1)
 			.preferredThisArg(isHandledMethod, name, thisArgument, thisProxyTarget);
 	}
 
 	isChanged(value, equals) {
-		return this._stack.at(-1).isChanged(value, equals);
+		return at(this._stack, -1).isChanged(value, equals);
 	}
 
 	isPartOfClone(changePath) {
-		return this._stack.at(-1).isPathApplicable(changePath);
+		return at(this._stack, -1).isPathApplicable(changePath);
 	}
 
 	undo(object) {
