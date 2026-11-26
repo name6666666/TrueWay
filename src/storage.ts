@@ -1,5 +1,5 @@
 import mz from 'rmmz'
-import { MapData, TrueWayData } from './true-way'
+import { MapData, TrueWayData } from './true-way.ts'
 import fetchSync from 'sync-fetch'
 
 
@@ -9,7 +9,7 @@ declare module 'rmmz' {
     }
 }
 
-declare module './true-way' {
+declare module './true-way.ts' {
     interface TrueWayType {
         $dataMapAll: mz.DataMap[]
     }

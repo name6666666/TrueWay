@@ -1,6 +1,7 @@
 import mz from 'rmmz'
-import { param, TrueWayError } from './true-way'
-import { MapAttr } from './map-attr'
+import { param, TrueWayError } from './true-way.ts'
+import { MapAttr } from './map-attr.ts'
+import onChange from 'on-change'
 
 
 export interface EventAttr extends EventAttrBase {
@@ -56,7 +57,7 @@ export class EventAttrBase {
 }
 EventAttrBase.initProperties()
 
-declare module './true-way' {
+declare module './true-way.ts' {
     interface TrueWayType {
         EventAttrBase: typeof EventAttrBase
     }
@@ -143,3 +144,18 @@ window[param.self] = new Proxy({}, {
         return Reflect.set(eventAttr, p, newValue)
     }
 })
+
+declare module './true-way.ts' {
+    interface TrueWayType {
+        _currentTrueEvents: mz.Game_Event[]
+    }
+}
+
+const _Game_Map_setup = mz.Game_Map.prototype.setup
+mz.Game_Map.prototype.setup = function(mapId) {
+    _Game_Map_setup.call(this, mapId)
+    TrueWay._currentTrueEvents = mz.$gameMap._events
+    mz.$gameMap._events = onChange(TrueWay._currentTrueEvents, (path, value, previous, applyData) => {
+        
+    })
+}

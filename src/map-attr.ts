@@ -1,9 +1,9 @@
 import mz from 'rmmz'
-import {genReg, param, TrueWayError} from './true-way'
+import {genReg, param, TrueWayError} from './true-way.ts'
 import escape from 'escape-string-regexp'
-import { EventAttr, getEventByMapIdAndEventId } from './event-attr'
-import './storage'
-import { solveEventTable, solveMapTable } from './solve-table'
+import { EventAttr, getEventByMapIdAndEventId } from './event-attr.ts'
+import './storage.ts'
+import { solveEventTable, solveMapTable } from './solve-table.ts'
 
 
 export interface MapAttr extends MapAttrBase {
@@ -57,7 +57,7 @@ export class MapAttrBase {
     }
 }
 
-declare module './true-way' {
+declare module './true-way.ts' {
     interface TrueWayType {
         getMapById: {(id: number): MapAttr}
         getTopMap: {(name: string): MapAttr}

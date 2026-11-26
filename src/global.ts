@@ -1,5 +1,5 @@
 import mz from 'rmmz'
-import { param, TrueWayError } from './true-way'
+import { param, TrueWayError } from './true-way.ts'
 
 
 const enum IdType {

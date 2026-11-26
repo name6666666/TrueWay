@@ -1,5 +1,5 @@
 import mz from 'rmmz'
-import { param, TrueWayError } from './true-way'
+import { param, TrueWayError } from './true-way.ts'
 import jsTokens, { Token } from 'js-tokens'
 
 const begin = param.js.parentheses[0]

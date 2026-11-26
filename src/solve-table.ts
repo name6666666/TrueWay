@@ -1,6 +1,6 @@
 import mz from 'rmmz'
-import { EventTable, InverseMapTable, MapTable } from './map-attr'
-import { TrueWayError } from './true-way'
+import { EventTable, InverseMapTable, MapTable } from './map-attr.ts'
+import { TrueWayError } from './true-way.ts'
 
 
 interface Node {
