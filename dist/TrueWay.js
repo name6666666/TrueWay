@@ -161,6 +161,14 @@
  * @default true
  * @on yes
  * @off no
+ * 
+ * @param eventMonitor
+ * @text 动态事件监控
+ * @desc 监控新添加的动态事件，让它们也融入TrueWay的系统，适合配合其他动态事件插件
+ * @type boolean
+ * @default true
+ * @on yes
+ * @off no
  */
 
 /*~struct~InsertedExpression:
@@ -200,6 +208,7 @@
     const originalParam = mz.PluginManager.parameters('TrueWay');
     originalParam.mapTable = originalParam.mapTable === 'true' ? true : false;
     originalParam.eventTable = originalParam.eventTable === 'true' ? true : false;
+    originalParam.eventMonitor = originalParam.eventMonitor === 'true' ? true : false;
     originalParam.js = JSON.parse(originalParam.js);
     // @ts-ignore
     const param = originalParam;
@@ -2226,16 +2235,18 @@
             return Reflect.set(eventAttr, p, newValue);
         }
     });
-    const _Game_Map_setup$1 = mz.Game_Map.prototype.setup;
-    mz.Game_Map.prototype.setup = function (mapId) {
-        _Game_Map_setup$1.call(this, mapId);
-        TrueWay._currentTrueEvents = mz.$gameMap._events;
-        mz.$gameMap._events = onChange(TrueWay._currentTrueEvents, (path, value, previous, applyData) => {
-            if (path !== '')
-                return;
-            console.log(value);
-        });
-    };
+    if (param.eventMonitor) {
+        const _Game_Map_setup = mz.Game_Map.prototype.setup;
+        mz.Game_Map.prototype.setup = function (mapId) {
+            _Game_Map_setup.call(this, mapId);
+            TrueWay._currentTrueEvents = mz.$gameMap._events;
+            mz.$gameMap._events = onChange(TrueWay._currentTrueEvents, (path, value, previous, applyData) => {
+                if (path !== '')
+                    return;
+                console.log(value);
+            });
+        };
+    }
 
     class MapAttrBase {
         constructor(id) {
